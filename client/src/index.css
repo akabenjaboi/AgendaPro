@@ -1,0 +1,198 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #f8fafc; /* slate-50 */
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --border: #e2e8f0; /* slate-200 */
+    --text-primary: #0f172a; /* slate-900 */
+    --text-secondary: #64748b; /* slate-500 */
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 font-sans antialiased;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight text-slate-900;
+  }
+}
+
+@layer components {
+  /* Cards limpios */
+  .card {
+    @apply bg-white border border-slate-200 rounded-2xl shadow-sm;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-300 hover:shadow-md hover:border-slate-300;
+  }
+
+  /* Botones */
+  .btn-primary {
+    @apply bg-brand-500 hover:bg-brand-600 text-slate-900 font-semibold px-4 py-2.5 rounded-xl transition-all duration-200 
+           flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 shadow-sm hover:shadow;
+  }
+
+  .btn-secondary {
+    @apply bg-brand-50 hover:bg-brand-100 text-brand-900 font-medium px-4 py-2.5 rounded-xl transition-all duration-200 
+           flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 border border-brand-200;
+  }
+
+  .btn-danger {
+    @apply bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-medium px-4 py-2.5 rounded-xl 
+           transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95;
+  }
+
+  .btn-ghost {
+    @apply hover:bg-brand-50 text-slate-600 hover:text-brand-900 font-medium px-4 py-2.5 rounded-xl transition-all duration-200 
+           flex items-center gap-2 active:scale-95;
+  }
+
+  /* Inputs */
+  .input {
+    @apply w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400
+           focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all duration-200 shadow-sm;
+  }
+
+  .input-error {
+    @apply input border-red-300 focus:border-red-500 focus:ring-red-500/20;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-slate-700 mb-1.5;
+  }
+
+  .error-msg {
+    @apply text-xs text-red-500 mt-1;
+  }
+
+  /* Badges de estado de citas */
+  .badge-pending {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-amber-700 bg-amber-100 border border-amber-200;
+  }
+
+  .badge-confirmed {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-brand-900 bg-brand-100 border border-brand-200;
+  }
+
+  .badge-cancelled {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-red-700 bg-red-100 border border-red-200;
+  }
+
+  .badge-completed {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-slate-700 bg-slate-100 border border-slate-300;
+  }
+
+  .badge-no-show {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-orange-700 bg-orange-100 border border-orange-200;
+  }
+
+  /* Sidebar */
+  .sidebar-link {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:text-brand-900 hover:bg-brand-50
+           transition-all duration-200 font-medium text-sm;
+  }
+
+  .sidebar-link-active {
+    @apply sidebar-link text-brand-900 bg-brand-100 border border-brand-200;
+  }
+
+  /* Gradient decorativo */
+  .gradient-brand {
+    background: linear-gradient(135deg, #71C9CE 0%, #A6E3E9 100%);
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background: linear-gradient(135deg, #164346 0%, #3A8A8F 100%);
+  }
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-50;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400;
+}
+
+/* react-big-calendar overrides */
+.rbc-calendar {
+  @apply bg-white text-slate-700 font-sans;
+}
+
+.rbc-header {
+  @apply border-brand-100 py-3 text-slate-500 font-medium text-xs tracking-wider uppercase bg-brand-50/30;
+}
+
+.rbc-day-bg {
+  @apply border-brand-50;
+}
+
+.rbc-month-view {
+  @apply border-brand-100 bg-white rounded-b-xl overflow-hidden;
+}
+
+.rbc-month-row {
+  @apply border-brand-100;
+}
+
+.rbc-off-range-bg {
+  @apply bg-slate-50/50;
+}
+
+.rbc-today {
+  @apply bg-brand-50/40;
+}
+
+.rbc-event {
+  @apply rounded-md text-xs font-medium border-0 px-2 py-0.5 mx-1 transition-all shadow-sm;
+}
+
+.rbc-event-pending {
+  @apply bg-amber-100 text-amber-900 hover:bg-amber-200;
+}
+
+.rbc-event-confirmed {
+  @apply bg-brand-500 text-slate-900 hover:bg-brand-600;
+}
+
+.rbc-toolbar {
+  @apply mb-4 flex items-center justify-between gap-4 flex-wrap;
+}
+
+.rbc-toolbar button {
+  @apply text-slate-600 border-slate-200 bg-white rounded-lg px-4 py-2 font-medium transition-all shadow-sm;
+}
+
+.rbc-toolbar button:hover {
+  @apply bg-slate-50 border-slate-300 text-slate-900;
+}
+
+.rbc-toolbar button:active {
+  @apply shadow-none scale-95;
+}
+
+.rbc-toolbar button.rbc-active {
+  @apply bg-brand-500 text-slate-900 border-brand-500 shadow-md;
+}
