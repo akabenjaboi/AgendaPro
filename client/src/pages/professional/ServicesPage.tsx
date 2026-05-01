@@ -36,6 +36,8 @@ const schema = z.object({
   name: z.string().min(2, 'Mínimo 2 caracteres').max(100, 'Máximo 100 caracteres'),
   description: z.string().max(300, 'Máximo 300 caracteres').optional().or(z.literal('')),
   duration_minutes: z.coerce.number().min(5, 'Mínimo 5 minutos').max(480, 'Máximo 8 horas'),
+  buffer_after_minutes: z.coerce.number().min(0, 'Mínimo 0 minutos').max(240, 'Máximo 240 minutos'),
+  max_appointments_per_week: z.union([z.coerce.number().min(1, 'Mínimo 1 cita').max(500, 'Máximo 500 citas'), z.literal('')]).optional(),
   price: z.union([
     z.coerce.number().min(0, 'El precio no puede ser negativo'),
     z.literal(''),
@@ -97,6 +99,11 @@ export default function ServicesPage() {
       name: data.name,
       description: data.description || null,
       duration_minutes: data.duration_minutes,
+      buffer_before_minutes: 0,
+      buffer_after_minutes: data.buffer_after_minutes,
+      max_appointments_per_week: data.max_appointments_per_week === '' || data.max_appointments_per_week === undefined
+        ? null
+        : Number(data.max_appointments_per_week),
       price: data.price === '' || data.price === undefined ? null : Number(data.price),
       currency: data.currency,
       is_active: data.is_active,
@@ -316,6 +323,12 @@ function ServiceCard({
           {formatPrice(service.price, service.currency)}
         </div>
       </div>
+      <p className="text-xs text-slate-500">
+        Tiempo entre citas: {service.buffer_after_minutes} min
+      </p>
+      <p className="text-xs text-slate-500">
+        Límite semanal: {service.max_appointments_per_week ?? 'Sin límite'}
+      </p>
 
       {/* Toggle activo */}
       <div className="flex items-center justify-between pt-2 border-t border-slate-200/50">
@@ -357,14 +370,16 @@ function ServiceModal({
     formState: { errors },
   } = useForm<ServiceFormData>({
     resolver: zodResolver(schema) as any,
-    defaultValues: {
-      name: service?.name ?? '',
-      description: service?.description ?? '',
-      duration_minutes: service?.duration_minutes ?? 60,
-      price: service?.price ?? '',
-      currency: service?.currency ?? 'CLP',
-      is_active: service?.is_active ?? true,
-    },
+      defaultValues: {
+        name: service?.name ?? '',
+        description: service?.description ?? '',
+        duration_minutes: service?.duration_minutes ?? 60,
+        buffer_after_minutes: service?.buffer_after_minutes ?? 0,
+        max_appointments_per_week: service?.max_appointments_per_week ?? '',
+        price: service?.price ?? '',
+        currency: service?.currency ?? 'CLP',
+        is_active: service?.is_active ?? true,
+      },
   })
 
   const onSubmit = async (data: ServiceFormData) => {
@@ -493,6 +508,34 @@ function ServiceModal({
             </select>
           </div>
 
+          {/* Tiempo entre citas */}
+          <div>
+            <label className="label">Tiempo entre citas (min)</label>
+            <input
+              {...register('buffer_after_minutes')}
+              type="number"
+              min="0"
+              step="1"
+              className={errors.buffer_after_minutes ? 'input-error' : 'input'}
+            />
+            {errors.buffer_after_minutes && <p className="error-msg">{errors.buffer_after_minutes.message}</p>}
+          </div>
+
+          <div>
+            <label className="label">
+              Máximo semanal de este servicio
+              <span className="text-slate-600 font-normal ml-1">(vacío = sin límite)</span>
+            </label>
+            <input
+              {...register('max_appointments_per_week')}
+              type="number"
+              min="1"
+              step="1"
+              className={errors.max_appointments_per_week ? 'input-error' : 'input'}
+            />
+            {errors.max_appointments_per_week && <p className="error-msg">{String(errors.max_appointments_per_week.message)}</p>}
+          </div>
+
           {/* Estado */}
           <div className="flex items-center justify-between p-3 bg-slate-50/40 rounded-xl">
             <span className="text-sm text-slate-700">Servicio activo</span>
@@ -565,4 +608,3 @@ function DeleteConfirmModal({
     </div>
   )
 }
-

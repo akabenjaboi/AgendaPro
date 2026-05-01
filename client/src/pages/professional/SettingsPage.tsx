@@ -45,6 +45,8 @@ const schema = z.object({
     .regex(/^[a-z0-9-]+$/, 'Solo letras minúsculas, números y guiones'),
   timezone: z.string().min(1, 'Selecciona una zona horaria'),
   booking_link_active: z.boolean(),
+  max_appointments_per_day: z.union([z.coerce.number().min(1, 'Mínimo 1 cita').max(100, 'Máximo 100 citas'), z.literal('')]).optional(),
+  max_appointments_per_week: z.union([z.coerce.number().min(1, 'Mínimo 1 cita').max(1000, 'Máximo 1000 citas'), z.literal('')]).optional(),
 })
 
 type FormData = z.infer<typeof schema>
@@ -77,6 +79,8 @@ export default function SettingsPage() {
       slug: '',
       timezone: 'America/Santiago',
       booking_link_active: true,
+      max_appointments_per_day: '',
+      max_appointments_per_week: '',
     },
   })
 
@@ -104,6 +108,8 @@ export default function SettingsPage() {
           slug: data.slug,
           timezone: data.timezone,
           booking_link_active: data.booking_link_active,
+          max_appointments_per_day: data.max_appointments_per_day ?? '',
+          max_appointments_per_week: data.max_appointments_per_week ?? '',
         })
       }
     } catch {
@@ -171,6 +177,12 @@ export default function SettingsPage() {
         slug: data.slug,
         timezone: data.timezone,
         booking_link_active: data.booking_link_active,
+        max_appointments_per_day: data.max_appointments_per_day === '' || data.max_appointments_per_day === undefined
+          ? null
+          : Number(data.max_appointments_per_day),
+        max_appointments_per_week: data.max_appointments_per_week === '' || data.max_appointments_per_week === undefined
+          ? null
+          : Number(data.max_appointments_per_week),
       })
       setProfile(updated)
       setBookingActive(updated.booking_link_active)
@@ -315,6 +327,36 @@ export default function SettingsPage() {
                 </select>
               </div>
               {errors.timezone && <p className="error-msg">{errors.timezone.message}</p>}
+            </div>
+
+            <div>
+              <label className="label">
+                Máximo de citas por día
+                <span className="text-slate-600 font-normal ml-1">(vacío = sin límite)</span>
+              </label>
+              <input
+                {...register('max_appointments_per_day')}
+                type="number"
+                min="1"
+                step="1"
+                className={errors.max_appointments_per_day ? 'input-error' : 'input'}
+              />
+              {errors.max_appointments_per_day && <p className="error-msg">{String(errors.max_appointments_per_day.message)}</p>}
+            </div>
+
+            <div>
+              <label className="label">
+                Máximo de citas por semana
+                <span className="text-slate-600 font-normal ml-1">(vacío = sin límite)</span>
+              </label>
+              <input
+                {...register('max_appointments_per_week')}
+                type="number"
+                min="1"
+                step="1"
+                className={errors.max_appointments_per_week ? 'input-error' : 'input'}
+              />
+              {errors.max_appointments_per_week && <p className="error-msg">{String(errors.max_appointments_per_week.message)}</p>}
             </div>
           </div>
         </Section>

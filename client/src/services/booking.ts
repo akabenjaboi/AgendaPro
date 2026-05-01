@@ -22,6 +22,9 @@ export interface PublicService {
   name: string
   description: string | null
   duration_minutes: number
+  buffer_before_minutes: number
+  buffer_after_minutes: number
+  max_appointments_per_week: number | null
   price: number | null
   currency: string
 }

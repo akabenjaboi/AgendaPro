@@ -64,7 +64,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`)
-  console.log(`📅 AgendaPro API — modo ${process.env.NODE_ENV}`)
+  console.log(`📅 Blinktime API — modo ${process.env.NODE_ENV}`)
 })
 
 export default app

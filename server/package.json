@@ -1,7 +1,7 @@
 {
   "name": "agendamiento-server",
   "version": "1.0.0",
-  "description": "AgendaPro — API Server",
+  "description": "Blinktime — API Server",
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",

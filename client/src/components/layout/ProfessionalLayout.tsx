@@ -43,7 +43,7 @@ export default function ProfessionalLayout() {
             <Calendar className="w-5 h-5 text-slate-900" />
           </div>
           <div>
-            <h1 className="text-slate-900 font-bold text-base leading-none">AgendaPro</h1>
+            <h1 className="text-slate-900 font-bold text-base leading-none">Blinktime</h1>
             <p className="text-slate-500 text-xs mt-0.5">Panel Profesional</p>
           </div>
         </div>
@@ -129,7 +129,7 @@ export default function ProfessionalLayout() {
             <div className="w-7 h-7 gradient-brand rounded-lg flex items-center justify-center">
               <Calendar className="w-4 h-4 text-slate-900" />
             </div>
-            <span className="text-slate-900 font-bold text-sm">AgendaPro</span>
+            <span className="text-slate-900 font-bold text-sm">Blinktime</span>
           </div>
         </header>
 

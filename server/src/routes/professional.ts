@@ -3,6 +3,7 @@ import { requireAuth, requireProfessional, AuthenticatedRequest } from '../middl
 import { supabase } from '../lib/supabase'
 import {
   sendAppointmentConfirmedEmail,
+  sendAppointmentConfirmedEmailToProfessional,
   sendAppointmentCancelledEmail
 } from '../services/email'
 
@@ -31,7 +32,18 @@ router.get('/profile', async (req: AuthenticatedRequest, res) => {
 // PUT /api/professional/profile
 router.put('/profile', async (req: AuthenticatedRequest, res) => {
   try {
-    const { name, specialty, bio, phone, slug, avatar_url, timezone, booking_link_active } = req.body
+    const {
+      name,
+      specialty,
+      bio,
+      phone,
+      slug,
+      avatar_url,
+      timezone,
+      booking_link_active,
+      max_appointments_per_day,
+      max_appointments_per_week,
+    } = req.body
 
     // Validar slug único si se cambió
     if (slug) {
@@ -47,9 +59,35 @@ router.put('/profile', async (req: AuthenticatedRequest, res) => {
       }
     }
 
+    const maxPerDay = max_appointments_per_day === null || max_appointments_per_day === '' || max_appointments_per_day === undefined
+      ? null
+      : Number(max_appointments_per_day)
+    const maxPerWeek = max_appointments_per_week === null || max_appointments_per_week === '' || max_appointments_per_week === undefined
+      ? null
+      : Number(max_appointments_per_week)
+
+    if ((maxPerDay !== null && (Number.isNaN(maxPerDay) || maxPerDay < 1)) ||
+        (maxPerWeek !== null && (Number.isNaN(maxPerWeek) || maxPerWeek < 1))) {
+      return res.status(400).json({
+        error: 'Los límites de citas deben ser números mayores o iguales a 1, o quedar vacíos',
+        code: 'VALIDATION_ERROR',
+      })
+    }
+
     const { data, error } = await supabase
       .from('professionals')
-      .update({ name, specialty, bio, phone, slug, avatar_url, timezone, booking_link_active })
+      .update({
+        name,
+        specialty,
+        bio,
+        phone,
+        slug,
+        avatar_url,
+        timezone,
+        booking_link_active,
+        max_appointments_per_day: maxPerDay,
+        max_appointments_per_week: maxPerWeek,
+      })
       .eq('id', req.professionalId)
       .select()
       .single()
@@ -80,13 +118,43 @@ router.get('/services', async (req: AuthenticatedRequest, res) => {
 
 router.post('/services', async (req: AuthenticatedRequest, res) => {
   try {
-    const { name, description, duration_minutes, price, currency } = req.body
+    const {
+      name,
+      description,
+      duration_minutes,
+      price,
+      currency,
+      buffer_before_minutes,
+      buffer_after_minutes,
+      max_appointments_per_week,
+    } = req.body
     if (!name || !duration_minutes) {
       return res.status(400).json({ error: 'Nombre y duración son requeridos', code: 'VALIDATION_ERROR' })
     }
+    const before = Number(buffer_before_minutes ?? 0)
+    const after = Number(buffer_after_minutes ?? 0)
+    const maxPerWeek = max_appointments_per_week === null || max_appointments_per_week === '' || max_appointments_per_week === undefined
+      ? null
+      : Number(max_appointments_per_week)
+    if (Number.isNaN(before) || Number.isNaN(after) || before < 0 || after < 0) {
+      return res.status(400).json({ error: 'Los buffers deben ser números mayores o iguales a 0', code: 'VALIDATION_ERROR' })
+    }
+    if (maxPerWeek !== null && (Number.isNaN(maxPerWeek) || maxPerWeek < 1)) {
+      return res.status(400).json({ error: 'El límite semanal por servicio debe ser mayor o igual a 1, o vacío', code: 'VALIDATION_ERROR' })
+    }
     const { data, error } = await supabase
       .from('services')
-      .insert({ professional_id: req.professionalId, name, description, duration_minutes, price, currency })
+      .insert({
+        professional_id: req.professionalId,
+        name,
+        description,
+        duration_minutes,
+        price,
+        currency,
+        buffer_before_minutes: before,
+        buffer_after_minutes: after,
+        max_appointments_per_week: maxPerWeek,
+      })
       .select()
       .single()
 
@@ -100,11 +168,42 @@ router.post('/services', async (req: AuthenticatedRequest, res) => {
 router.put('/services/:id', async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params
-    const { name, description, duration_minutes, price, currency, is_active } = req.body
+    const {
+      name,
+      description,
+      duration_minutes,
+      price,
+      currency,
+      is_active,
+      buffer_before_minutes,
+      buffer_after_minutes,
+      max_appointments_per_week,
+    } = req.body
+    const before = Number(buffer_before_minutes ?? 0)
+    const after = Number(buffer_after_minutes ?? 0)
+    const maxPerWeek = max_appointments_per_week === null || max_appointments_per_week === '' || max_appointments_per_week === undefined
+      ? null
+      : Number(max_appointments_per_week)
+    if (Number.isNaN(before) || Number.isNaN(after) || before < 0 || after < 0) {
+      return res.status(400).json({ error: 'Los buffers deben ser números mayores o iguales a 0', code: 'VALIDATION_ERROR' })
+    }
+    if (maxPerWeek !== null && (Number.isNaN(maxPerWeek) || maxPerWeek < 1)) {
+      return res.status(400).json({ error: 'El límite semanal por servicio debe ser mayor o igual a 1, o vacío', code: 'VALIDATION_ERROR' })
+    }
 
     const { data, error } = await supabase
       .from('services')
-      .update({ name, description, duration_minutes, price, currency, is_active })
+      .update({
+        name,
+        description,
+        duration_minutes,
+        price,
+        currency,
+        is_active,
+        buffer_before_minutes: before,
+        buffer_after_minutes: after,
+        max_appointments_per_week: maxPerWeek,
+      })
       .eq('id', id)
       .eq('professional_id', req.professionalId)
       .select()
@@ -289,7 +388,7 @@ router.patch('/appointments/:id', async (req: AuthenticatedRequest, res) => {
         .single()
 
       if (fullApt) {
-        let profEmail = 'noreply@agendapro.com'
+        let profEmail = 'notificaciones@blinktime.lat'
         const profNode = fullApt.professionals as any
         if (profNode?.user_id) {
           const { data: authData } = await supabase.auth.admin.getUserById(profNode.user_id)
@@ -306,7 +405,10 @@ router.patch('/appointments/:id', async (req: AuthenticatedRequest, res) => {
         }
 
         if (status === 'confirmed') {
-          sendAppointmentConfirmedEmail(patientContact, profContact, emailDetails).catch(console.error)
+          await Promise.allSettled([
+            sendAppointmentConfirmedEmail(patientContact, profContact, emailDetails),
+            sendAppointmentConfirmedEmailToProfessional(profContact, patientContact, emailDetails),
+          ])
         } else if (status === 'cancelled') {
           sendAppointmentCancelledEmail(patientContact, profContact, emailDetails, 'professional', cancellation_reason).catch(console.error)
         }

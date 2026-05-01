@@ -11,7 +11,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 gradient-brand rounded-lg flex items-center justify-center shadow-md shadow-brand-200">
               <Calendar className="w-4.5 h-4.5 text-slate-900" />
             </div>
-            <span className="text-slate-900 font-bold text-lg">AgendaPro</span>
+            <span className="text-slate-900 font-bold text-lg">Blinktime</span>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors hidden sm:block">
@@ -66,7 +66,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">Todo lo que necesitas para tu consulta</h2>
-            <p className="text-slate-600 max-w-xl mx-auto">Olvídate del desorden de WhatsApp. AgendaPro centraliza tu negocio para que te enfoques en atender a tus pacientes.</p>
+            <p className="text-slate-600 max-w-xl mx-auto">Olvídate del desorden de WhatsApp. Blinktime centraliza tu negocio para que te enfoques en atender a tus pacientes.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -105,9 +105,9 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-brand-600" />
-            <span className="text-slate-900 font-bold">AgendaPro</span>
+            <span className="text-slate-900 font-bold">Blinktime</span>
           </div>
-          <p className="text-slate-500 text-sm">© 2026 AgendaPro. Todos los derechos reservados.</p>
+          <p className="text-slate-500 text-sm">© 2026 Blinktime. Todos los derechos reservados.</p>
         </div>
       </footer>
     </div>

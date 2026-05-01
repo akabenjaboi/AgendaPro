@@ -15,6 +15,7 @@ import ServicesPage from './pages/professional/ServicesPage'
 import SettingsPage from './pages/professional/SettingsPage'
 import BookingPage from './pages/public/BookingPage'
 import CancelPage from './pages/public/CancelPage'
+import ReschedulePage from './pages/public/ReschedulePage'
 import MyAppointmentsPage from './pages/patient/MyAppointmentsPage'
 import LandingPage from './pages/public/LandingPage'
 
@@ -68,6 +69,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/book/:slug" element={<BookingPage />} />
         <Route path="/cancel/:token" element={<CancelPage />} />
+        <Route path="/reschedule/:token" element={<ReschedulePage />} />
         <Route path="/my-appointments" element={<MyAppointmentsPage />} />
 
         {/* Panel del profesional (protegido) */}

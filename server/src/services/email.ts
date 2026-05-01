@@ -7,8 +7,8 @@ const resend = process.env.RESEND_API_KEY
   : null
 
 const APP_URL = process.env.APP_URL || 'http://localhost:5173'
-// Default "from" email for Resend testing domain (you can change this to your verified domain later)
-const FROM_EMAIL = 'AgendaPro <onboarding@resend.dev>'
+const RESCHEDULE_LIMIT_HOURS_BEFORE = Number(process.env.RESCHEDULE_LIMIT_HOURS_BEFORE ?? 24)
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Blinktime <notificaciones@blinktime.lat>'
 
 export interface EmailContact {
   name: string
@@ -94,6 +94,7 @@ export async function sendAppointmentConfirmedEmail(
 ) {
   const dateStr = formatDate(apt.startsAt)
   const cancelUrl = `${APP_URL}/cancel/${apt.token}`
+  const rescheduleUrl = `${APP_URL}/reschedule/${apt.token}`
 
   const html = `
     <div style="font-family: sans-serif; max-w-md; margin: 0 auto;">
@@ -106,6 +107,8 @@ export async function sendAppointmentConfirmedEmail(
       <p>Nos vemos pronto.</p>
       <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
       <p style="font-size: 12px; color: #64748b;">
+        Si necesitas reagendar, usa este enlace (hasta ${RESCHEDULE_LIMIT_HOURS_BEFORE}h antes):<br/>
+        <a href="${rescheduleUrl}">${rescheduleUrl}</a><br/><br/>
         Para cancelar la cita en caso de imprevisto, usa este enlace:<br/>
         <a href="${cancelUrl}">${cancelUrl}</a>
       </p>
@@ -113,6 +116,55 @@ export async function sendAppointmentConfirmedEmail(
   `
 
   return sendEmail(patient.email, `¡Tu cita con ${professional.name} fue confirmada!`, html)
+}
+
+export async function sendAppointmentConfirmedEmailToProfessional(
+  professional: EmailContact,
+  patient: EmailContact,
+  apt: AppointmentDetails
+) {
+  const dateStr = formatDate(apt.startsAt)
+
+  const html = `
+    <div style="font-family: sans-serif; max-w-md; margin: 0 auto;">
+      <h2 style="color: #0f172a;">Hola ${professional.name},</h2>
+      <p>Confirmaste la cita de <strong>${patient.name}</strong>.</p>
+      <div style="background-color: #ecfdf5; padding: 15px; border-radius: 8px; border: 1px solid #a7f3d0; margin: 20px 0;">
+        <p style="margin: 0; color: #065f46;"><strong>Paciente:</strong> ${patient.name} (${patient.email})</p>
+        <p style="margin: 5px 0 0 0; color: #065f46;"><strong>Servicio:</strong> ${apt.serviceName}</p>
+        <p style="margin: 5px 0 0 0; color: #065f46;"><strong>Fecha y Hora:</strong> <span style="text-transform: capitalize;">${dateStr}</span></p>
+      </div>
+      <a href="${APP_URL}/appointments" style="display: inline-block; background-color: #0ea5e9; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">Ver mis citas</a>
+    </div>
+  `
+
+  return sendEmail(professional.email, `Cita confirmada: ${patient.name}`, html)
+}
+
+export async function sendAppointmentRescheduledEmailToProfessional(
+  professional: EmailContact,
+  patient: EmailContact,
+  apt: AppointmentDetails,
+  previousStartsAt: string
+) {
+  const previousDateStr = formatDate(previousStartsAt)
+  const newDateStr = formatDate(apt.startsAt)
+
+  const html = `
+    <div style="font-family: sans-serif; max-w-md; margin: 0 auto;">
+      <h2 style="color: #0f172a;">Hola ${professional.name},</h2>
+      <p>${patient.name} <strong>reagendó</strong> una cita.</p>
+      <div style="background-color: #eff6ff; padding: 15px; border-radius: 8px; border: 1px solid #bfdbfe; margin: 20px 0;">
+        <p style="margin: 0; color: #1e3a8a;"><strong>Paciente:</strong> ${patient.name} (${patient.email})</p>
+        <p style="margin: 5px 0 0 0; color: #1e3a8a;"><strong>Servicio:</strong> ${apt.serviceName}</p>
+        <p style="margin: 5px 0 0 0; color: #1e3a8a;"><strong>Horario anterior:</strong> <span style="text-transform: capitalize;">${previousDateStr}</span></p>
+        <p style="margin: 5px 0 0 0; color: #1e3a8a;"><strong>Nuevo horario:</strong> <span style="text-transform: capitalize;">${newDateStr}</span></p>
+      </div>
+      <a href="${APP_URL}/appointments" style="display: inline-block; background-color: #0ea5e9; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">Ver citas</a>
+    </div>
+  `
+
+  return sendEmail(professional.email, `Cita reagendada: ${patient.name}`, html)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -126,13 +178,13 @@ export async function sendAppointmentCancelledEmail(
   reason?: string
 ) {
   const dateStr = formatDate(apt.startsAt)
-  const isPatient = cancelledBy === 'patient'
+  const actor = cancelledBy === 'patient' ? 'paciente' : 'profesional'
 
   // Correo para el paciente
   const patientHtml = `
     <div style="font-family: sans-serif; max-w-md; margin: 0 auto;">
       <h2 style="color: #0f172a;">Hola ${patient.name},</h2>
-      <p>Tu cita con ${professional.name} ha sido <strong>cancelada</strong>.</p>
+      <p>Tu cita con ${professional.name} ha sido <strong>cancelada</strong> por ${actor}.</p>
       <div style="background-color: #fef2f2; padding: 15px; border-radius: 8px; border: 1px solid #fecaca; margin: 20px 0;">
         <p style="margin: 0; color: #991b1b;"><strong>Servicio:</strong> ${apt.serviceName}</p>
         <p style="margin: 5px 0 0 0; color: #991b1b;"><strong>Fecha:</strong> <span style="text-transform: capitalize;">${dateStr}</span></p>
@@ -145,7 +197,7 @@ export async function sendAppointmentCancelledEmail(
   const profHtml = `
     <div style="font-family: sans-serif; max-w-md; margin: 0 auto;">
       <h2 style="color: #0f172a;">Hola ${professional.name},</h2>
-      <p>La cita con ${patient.name} ha sido <strong>cancelada</strong>.</p>
+      <p>La cita con ${patient.name} ha sido <strong>cancelada</strong> por ${actor}.</p>
       <div style="background-color: #fef2f2; padding: 15px; border-radius: 8px; border: 1px solid #fecaca; margin: 20px 0;">
         <p style="margin: 0; color: #991b1b;"><strong>Paciente:</strong> ${patient.name} (${patient.email})</p>
         <p style="margin: 5px 0 0 0; color: #991b1b;"><strong>Servicio:</strong> ${apt.serviceName}</p>

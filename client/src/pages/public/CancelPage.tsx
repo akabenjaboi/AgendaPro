@@ -228,7 +228,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           <div className="p-2 bg-brand-500/10 rounded-xl">
             <Calendar size={18} className="text-brand-400" />
           </div>
-          <span className="font-bold text-slate-900 text-lg">AgendaPro</span>
+          <span className="font-bold text-slate-900 text-lg">Blinktime</span>
         </div>
         {children}
       </div>
