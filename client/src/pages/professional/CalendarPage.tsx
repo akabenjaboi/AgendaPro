@@ -78,7 +78,7 @@ export default function CalendarPage() {
     if (!professionalId) return
     setActionLoading(true)
     try {
-      await api.patch(`/api/professional/appointments/${id}`, { status: newStatus })
+      await api.patch(`/professional/appointments/${id}`, { status: newStatus })
 
       // Actualizar el estado local
       setAppointments(prev =>

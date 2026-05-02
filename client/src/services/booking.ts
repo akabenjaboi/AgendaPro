@@ -1,8 +1,8 @@
 import axios from 'axios'
 import { formatPrice, formatDuration } from './services'
+import { API_BASE } from './apiBase'
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
-const API = `${BASE}/api`
+const API = API_BASE
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 

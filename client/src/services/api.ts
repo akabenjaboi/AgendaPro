@@ -1,8 +1,9 @@
 import axios from 'axios'
 import { supabase } from '../lib/supabase'
+import { API_BASE } from './apiBase'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
   },

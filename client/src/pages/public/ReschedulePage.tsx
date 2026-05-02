@@ -5,9 +5,9 @@ import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import { Calendar, Clock, CheckCircle, XCircle, Loader2, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getAvailabilitySlots, getDateRange, formatDate, extractTime, type AvailabilityMap } from '../../services/booking'
+import { API_BASE } from '../../services/apiBase'
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
-const API = `${BASE}/api`
+const API = API_BASE
 
 interface RescheduleInfo {
   id: string

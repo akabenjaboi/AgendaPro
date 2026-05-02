@@ -91,7 +91,7 @@ export default function AppointmentsPage() {
     if (!professionalId) return
     setActionLoading(true)
     try {
-      await api.patch(`/api/professional/appointments/${id}`, { status: newStatus })
+      await api.patch(`/professional/appointments/${id}`, { status: newStatus })
 
       setAppointments(prev =>
         prev.map(a => a.id === id ? { ...a, status: newStatus as Appointment['status'] } : a)
