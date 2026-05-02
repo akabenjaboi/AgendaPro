@@ -49,7 +49,8 @@ const schema = z.object({
   max_appointments_per_week: z.union([z.coerce.number().min(1, 'Mínimo 1 cita').max(1000, 'Máximo 1000 citas'), z.literal('')]).optional(),
 })
 
-type FormData = z.infer<typeof schema>
+type FormInput = z.input<typeof schema>
+type FormData = z.output<typeof schema>
 
 // ─────────────────────────────────────────────
 // Componente principal
@@ -69,7 +70,7 @@ export default function SettingsPage() {
     setValue,
     reset,
     formState: { errors, isDirty },
-  } = useForm<FormData>({
+  } = useForm<FormInput, unknown, FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: '',
