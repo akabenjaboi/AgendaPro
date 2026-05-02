@@ -23,7 +23,7 @@ type FormData = z.infer<typeof schema>
 
 export default function RegisterPage() {
   const navigate = useNavigate()
-  const { user } = useAuthStore()
+  const { user, session } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -79,8 +79,8 @@ export default function RegisterPage() {
   }
 
   useEffect(() => {
-    if (user) navigate('/dashboard')
-  }, [user, navigate])
+    if (user && session) navigate('/dashboard')
+  }, [user, session, navigate])
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12 relative overflow-hidden">

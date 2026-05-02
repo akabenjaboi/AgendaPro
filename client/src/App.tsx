@@ -24,9 +24,9 @@ import ProfessionalLayout from './components/layout/ProfessionalLayout'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 
 function HomeRoute() {
-  const { user, loading } = useAuthStore()
+  const { user, session, loading } = useAuthStore()
   if (loading) return <LandingPage />
-  if (user) return <Navigate to="/dashboard" replace />
+  if (user && session) return <Navigate to="/dashboard" replace />
   return <LandingPage />
 }
 
