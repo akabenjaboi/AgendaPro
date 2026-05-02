@@ -23,6 +23,13 @@ import LandingPage from './pages/public/LandingPage'
 import ProfessionalLayout from './components/layout/ProfessionalLayout'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 
+function HomeRoute() {
+  const { user, loading } = useAuthStore()
+  if (loading) return <LandingPage />
+  if (user) return <Navigate to="/dashboard" replace />
+  return <LandingPage />
+}
+
 function App() {
   const { setUser, setSession, setLoading } = useAuthStore()
 
@@ -85,7 +92,7 @@ function App() {
         </Route>
 
         {/* Redirección raíz / Landing Page */}
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<HomeRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
