@@ -113,6 +113,20 @@ export default function AppointmentsPage() {
     }
   }
 
+  const deleteCancelledAppointment = async (id: string) => {
+    setActionLoading(true)
+    try {
+      await api.delete(`/professional/appointments/${id}`)
+      setAppointments(prev => prev.filter(a => a.id !== id))
+      setSelected(prev => (prev?.id === id ? null : prev))
+      toast.success('Cita eliminada')
+    } catch {
+      toast.error('Error al eliminar la cita')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   // ── Filtrado y búsqueda ─────────────────────────────────────────────────
   const filtered = appointments.filter(a => {
     const matchStatus = statusFilter === 'all' || a.status === statusFilter
@@ -230,6 +244,7 @@ export default function AppointmentsPage() {
           loading={actionLoading}
           onClose={() => setSelected(null)}
           onUpdateStatus={updateStatus}
+          onDeleteCancelled={deleteCancelledAppointment}
         />
       )}
     </div>
@@ -282,11 +297,13 @@ export function AppointmentDetailModal({
   loading,
   onClose,
   onUpdateStatus,
+  onDeleteCancelled,
 }: {
   appointment: Appointment
   loading: boolean
   onClose: () => void
   onUpdateStatus: (id: string, status: string) => Promise<void>
+  onDeleteCancelled: (id: string) => Promise<void>
 }) {
   const start = parseISO(apt.starts_at)
   const end   = parseISO(apt.ends_at)
@@ -300,6 +317,7 @@ export function AppointmentDetailModal({
   const canConfirm  = apt.status === 'pending'
   const canComplete = apt.status === 'confirmed' || apt.status === 'pending'
   const canCancel   = apt.status !== 'cancelled' && apt.status !== 'completed'
+  const canDelete   = apt.status === 'cancelled'
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -357,7 +375,7 @@ export function AppointmentDetailModal({
           </div>
 
           {/* Acciones */}
-          {(canConfirm || canComplete || canCancel) && (
+          {(canConfirm || canComplete || canCancel || canDelete) && (
             <div className="flex flex-col gap-2">
               {canConfirm && (
                 <button
@@ -388,6 +406,17 @@ export function AppointmentDetailModal({
                 >
                   {loading ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
                   Cancelar cita
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  onClick={() => onDeleteCancelled(apt.id)}
+                  disabled={loading}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-xl text-sm font-medium
+                             text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                >
+                  {loading ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
+                  Eliminar cita cancelada
                 </button>
               )}
             </div>

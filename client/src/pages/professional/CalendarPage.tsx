@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar'
-import type { Event as CalendarEvent } from 'react-big-calendar'
+import type { Event as CalendarEvent, View } from 'react-big-calendar'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { format, parse, startOfWeek, getDay, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale/es' // We specifically import 'es' from date-fns
@@ -101,6 +101,20 @@ export default function CalendarPage() {
     }
   }
 
+  const deleteCancelledAppointment = async (id: string) => {
+    setActionLoading(true)
+    try {
+      await api.delete(`/professional/appointments/${id}`)
+      setAppointments(prev => prev.filter(a => a.id !== id))
+      setSelectedApt(prev => (prev?.id === id ? null : prev))
+      toast.success('Cita eliminada')
+    } catch {
+      toast.error('Error al eliminar la cita')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   // Convertir nuestros Appointments al formato que espera react-big-calendar
   const events: MyEvent[] = appointments.map(apt => ({
     title: `${apt.patient_name} - ${apt.services?.name ?? 'Cita'}`,
@@ -122,7 +136,9 @@ export default function CalendarPage() {
   }
 
   const [date, setDate] = useState(new Date())
-  const [view, setView] = useState<any>('month')
+  const [view, setView] = useState<View>(() =>
+    window.matchMedia('(max-width: 767px)').matches ? 'agenda' : 'month'
+  )
 
   return (
     <div className="space-y-6 animate-fade-in flex flex-col h-[calc(100vh-6rem)]">
@@ -176,6 +192,7 @@ export default function CalendarPage() {
           loading={actionLoading}
           onClose={() => setSelectedApt(null)}
           onUpdateStatus={updateStatus}
+          onDeleteCancelled={deleteCancelledAppointment}
         />
       )}
     </div>

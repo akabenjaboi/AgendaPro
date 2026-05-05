@@ -44,8 +44,31 @@ Deno.serve(async (req) => {
     if (auth.errorResponse) return auth.errorResponse
 
     const [resource, appointmentId] = readPathSegments(req, "professional")
-    if (resource !== "appointments" || !appointmentId || req.method !== "PATCH") {
+    if (resource !== "appointments" || !appointmentId || !["PATCH", "DELETE"].includes(req.method)) {
       return error("Ruta no encontrada", "NOT_FOUND", 404)
+    }
+
+    if (req.method === "DELETE") {
+      const { data: existing, error: getError } = await supabase
+        .from("appointments")
+        .select("id, status")
+        .eq("id", appointmentId)
+        .eq("professional_id", auth.professionalId)
+        .single()
+
+      if (getError || !existing) return error("Cita no encontrada", "NOT_FOUND", 404)
+      if (existing.status !== "cancelled") {
+        return error("Solo se pueden eliminar citas canceladas", "INVALID_STATUS", 400)
+      }
+
+      const { error: deleteError } = await supabase
+        .from("appointments")
+        .delete()
+        .eq("id", appointmentId)
+        .eq("professional_id", auth.professionalId)
+
+      if (deleteError) throw deleteError
+      return json({ message: "Cita eliminada correctamente" })
     }
 
     const body = await req.json().catch(() => ({}))
