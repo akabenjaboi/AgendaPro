@@ -25,6 +25,13 @@ type PatientForm = z.infer<typeof patientSchema>
 // ── Steps ─────────────────────────────────────────────────────────────────
 type Step = 'service' | 'datetime' | 'form' | 'confirm'
 
+function dateKeyLocal(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 export default function BookingPage() {
   const { slug } = useParams<{ slug: string }>()
 
@@ -77,7 +84,7 @@ export default function BookingPage() {
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() + weekOffset * 7 + i)
-    return d.toISOString().split('T')[0]
+    return dateKeyLocal(d)
   })
 
   const hasSlots = (date: string) => (availability[date]?.length ?? 0) > 0
@@ -267,7 +274,7 @@ export default function BookingPage() {
                       const d = new Date(date + 'T12:00:00')
                       const isSelected = selectedDate === date
                       const available = hasSlots(date)
-                      const isToday = date === new Date().toISOString().split('T')[0]
+                      const isToday = date === dateKeyLocal(new Date())
 
                       return (
                         <button

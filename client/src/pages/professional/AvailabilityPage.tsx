@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuthStore } from '../../stores/authStore'
 import { getMyProfile } from '../../services/professional'
 import {
@@ -16,7 +16,6 @@ import toast from 'react-hot-toast'
 import { format, parseISO, isSameDay } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import {
-  Save,
   Loader2,
   Plus,
   Trash2,
@@ -34,8 +33,9 @@ export default function AvailabilityPage() {
   const [weekDays, setWeekDays]   = useState<WeekDay[]>([])
   const [blocked, setBlocked]     = useState<BlockedSlot[]>([])
   const [loading, setLoading]     = useState(true)
-  const [saving, setSaving]       = useState(false)
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [showBlockForm, setShowBlockForm] = useState(false)
+  const initializedRef = useRef(false)
 
   // ── Cargar datos ─────────────────────────────
   useEffect(() => {
@@ -55,6 +55,7 @@ export default function AvailabilityPage() {
       ])
       setWeekDays(slotsToWeekDays(slots))
       setBlocked(blockedSlots)
+      initializedRef.current = true
     } catch {
       toast.error('Error al cargar disponibilidad')
     } finally {
@@ -62,27 +63,30 @@ export default function AvailabilityPage() {
     }
   }
 
-  // ── Guardar horario semanal ───────────────────
-  const handleSave = async () => {
-    if (!professionalId) return
+  // ── Guardado automático del horario semanal ───
+  useEffect(() => {
+    if (!professionalId || !initializedRef.current) return
 
-    // Validar que los días habilitados tienen rango válido
-    const invalid = weekDays.filter(d => d.enabled && d.start_time >= d.end_time)
-    if (invalid.length > 0) {
-      toast.error(`Horario inválido en: ${invalid.map(d => d.label).join(', ')}`)
+    const invalid = weekDays.some(d => d.enabled && d.start_time >= d.end_time)
+    if (invalid) {
+      setSaveState('error')
       return
     }
 
-    setSaving(true)
-    try {
-      await saveAvailability(professionalId, weekDays)
-      toast.success('Horario guardado correctamente')
-    } catch {
-      toast.error('Error al guardar el horario')
-    } finally {
-      setSaving(false)
-    }
-  }
+    setSaveState('saving')
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        await saveAvailability(professionalId, weekDays)
+        setSaveState('saved')
+        window.setTimeout(() => setSaveState('idle'), 1200)
+      } catch {
+        setSaveState('error')
+        toast.error('Error al guardar el horario')
+      }
+    }, 700)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [professionalId, weekDays])
 
   // ── Cambios en días ──────────────────────────
   const toggleDay = (index: number) => {
@@ -164,16 +168,13 @@ export default function AvailabilityPage() {
               ? 'Sin días configurados — no recibirás citas'
               : `${enabledCount} día${enabledCount !== 1 ? 's' : ''} habilitado${enabledCount !== 1 ? 's' : ''}`}
           </p>
+          <p className="text-xs mt-1 text-slate-500">
+            {saveState === 'saving' && 'Guardando cambios automáticamente...'}
+            {saveState === 'saved' && 'Cambios guardados'}
+            {saveState === 'error' && 'Hay horarios inválidos o un error al guardar'}
+            {saveState === 'idle' && 'Guardado automático activado'}
+          </p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="btn-primary"
-        >
-          {saving
-            ? <><Loader2 size={15} className="animate-spin" />Guardando...</>
-            : <><Save size={15} />Guardar</>}
-        </button>
       </div>
 
       {/* ── Horario semanal ──────────────────── */}
@@ -452,10 +453,10 @@ function AddBlockModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 overflow-y-auto">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-md card p-0 overflow-hidden animate-slide-up shadow-2xl shadow-black/50">
+      <div className="relative my-6 w-full max-w-md card p-0 overflow-hidden animate-slide-up shadow-2xl shadow-black/50 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/50">
           <div className="flex items-center gap-2">
@@ -467,7 +468,7 @@ function AddBlockModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
           {/* Toggle todo el día */}
           <div className="flex items-center justify-between p-3 bg-slate-50/40 rounded-xl">
             <span className="text-sm text-slate-700">Todo el día</span>

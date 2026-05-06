@@ -1,5 +1,71 @@
 import { getEndOfIsoWeek, getIsoWeekKey, getStartOfIsoWeek } from "./time.ts"
 
+function zonedParts(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(date)
+
+  const read = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? "0")
+  const hour = read("hour") % 24
+  return {
+    year: read("year"),
+    month: read("month"),
+    day: read("day"),
+    hour,
+    minute: read("minute"),
+    second: read("second"),
+  }
+}
+
+function zonedDateKey(date: Date, timeZone: string): string {
+  const p = zonedParts(date, timeZone)
+  return `${p.year}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`
+}
+
+function zonedDayOfWeek(date: Date, timeZone: string): number {
+  const short = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short" }).format(date)
+  const map: Record<string, number> = {
+    Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+  }
+  return map[short] ?? 0
+}
+
+function parseDateKey(dateStr: string): { year: number; month: number; day: number } {
+  const [year, month, day] = dateStr.split("-").map(Number)
+  return { year, month, day }
+}
+
+function dateKeyToUtcNoon(dateStr: string): Date {
+  const { year, month, day } = parseDateKey(dateStr)
+  return new Date(Date.UTC(year, month - 1, day, 12, 0, 0))
+}
+
+function timeZoneOffsetMinutes(date: Date, timeZone: string): number {
+  const p = zonedParts(date, timeZone)
+  const asUtc = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second)
+  return (asUtc - date.getTime()) / 60_000
+}
+
+function zonedDateTimeToUtc(dateStr: string, timeStr: string, timeZone: string): Date {
+  const { year, month, day } = parseDateKey(dateStr)
+  const [hour, minute] = timeStr.split(":").map(Number)
+  const localAsUtcMs = Date.UTC(year, month - 1, day, hour, minute, 0)
+
+  let utcMs = localAsUtcMs
+  for (let i = 0; i < 2; i++) {
+    const offset = timeZoneOffsetMinutes(new Date(utcMs), timeZone)
+    utcMs = localAsUtcMs - offset * 60_000
+  }
+  return new Date(utcMs)
+}
+
 export function rangeForWeekQueries(start: string, end: string) {
   const rangeStartDate = new Date(`${start}T00:00:00.000Z`)
   const rangeEndDate = new Date(`${end}T23:59:59.999Z`)
@@ -21,6 +87,7 @@ export function calculateAvailableSlots({
   maxAppointmentsPerWeek,
   serviceId,
   serviceMaxAppointmentsPerWeek,
+  professionalTimezone,
 }: {
   availability: Array<{ day_of_week: number; start_time: string; end_time: string }>
   appointments: Array<{
@@ -39,16 +106,18 @@ export function calculateAvailableSlots({
   maxAppointmentsPerWeek: number | null
   serviceId?: string
   serviceMaxAppointmentsPerWeek: number | null
+  professionalTimezone: string
 }) {
   const slots: Record<string, string[]> = {}
   const dailyCounts = new Map<string, number>()
   const weeklyCounts = new Map<string, number>()
   const weeklyServiceCounts = new Map<string, number>()
+  const timeZone = professionalTimezone || "UTC"
 
   for (const apt of appointments) {
     const aptDate = new Date(apt.starts_at)
-    const dayKey = aptDate.toISOString().slice(0, 10)
-    const weekKey = getIsoWeekKey(aptDate)
+    const dayKey = zonedDateKey(aptDate, timeZone)
+    const weekKey = getIsoWeekKey(dateKeyToUtcNoon(dayKey))
     dailyCounts.set(dayKey, (dailyCounts.get(dayKey) ?? 0) + 1)
     weeklyCounts.set(weekKey, (weeklyCounts.get(weekKey) ?? 0) + 1)
     if (serviceId && apt.service_id === serviceId) {
@@ -56,17 +125,18 @@ export function calculateAvailableSlots({
     }
   }
 
-  const start = new Date(startDate + "T12:00:00")
-  const end = new Date(endDate + "T12:00:00")
+  const startMs = dateKeyToUtcNoon(startDate).getTime()
+  const endMs = dateKeyToUtcNoon(endDate).getTime()
 
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const dayOfWeek = d.getDay()
-    const dateStr = d.toISOString().split("T")[0]
+  for (let currentMs = startMs; currentMs <= endMs; currentMs += 24 * 60 * 60 * 1000) {
+    const loopDate = new Date(currentMs)
+    const dateStr = zonedDateKey(loopDate, timeZone)
+    const dayOfWeek = zonedDayOfWeek(loopDate, timeZone)
 
     const dayAvailability = availability.find((a) => a.day_of_week === dayOfWeek)
     if (!dayAvailability) continue
 
-    const weekKey = getIsoWeekKey(new Date(`${dateStr}T12:00:00.000Z`))
+    const weekKey = getIsoWeekKey(dateKeyToUtcNoon(dateStr))
     if (maxAppointmentsPerDay !== null && (dailyCounts.get(dateStr) ?? 0) >= maxAppointmentsPerDay) continue
     if (maxAppointmentsPerWeek !== null && (weeklyCounts.get(weekKey) ?? 0) >= maxAppointmentsPerWeek) continue
     if (serviceId && serviceMaxAppointmentsPerWeek !== null && (weeklyServiceCounts.get(weekKey) ?? 0) >= serviceMaxAppointmentsPerWeek) continue
@@ -74,8 +144,8 @@ export function calculateAvailableSlots({
     const [sh, sm] = dayAvailability.start_time.split(":").map(Number)
     const [eh, em] = dayAvailability.end_time.split(":").map(Number)
 
-    const dayStart = new Date(`${dateStr}T${String(sh).padStart(2, "0")}:${String(sm).padStart(2, "0")}:00`)
-    const dayEnd = new Date(`${dateStr}T${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}:00`)
+    const dayStart = zonedDateTimeToUtc(dateStr, `${String(sh).padStart(2, "0")}:${String(sm).padStart(2, "0")}`, timeZone)
+    const dayEnd = zonedDateTimeToUtc(dateStr, `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`, timeZone)
 
     const freeSlots: string[] = []
     const current = new Date(dayStart)

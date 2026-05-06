@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -398,8 +399,20 @@ function ServiceModal({
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  // Evita scroll/overscroll del documento detrás del modal
+  useEffect(() => {
+    const bodyOverflow = document.body.style.overflow
+    const htmlOverflow = document.documentElement.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = bodyOverflow
+      document.documentElement.style.overflow = htmlOverflow
+    }
+  }, [])
+
+  return createPortal(
+    <div className="fixed inset-0 z-50">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -407,7 +420,8 @@ function ServiceModal({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg card p-0 overflow-hidden animate-slide-up shadow-2xl shadow-black/50">
+      <div className="relative z-10 h-full overflow-y-auto p-4 flex items-start sm:items-center justify-center">
+        <div className="my-6 w-full max-w-lg card p-0 overflow-hidden animate-slide-up shadow-2xl shadow-black/50 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/50">
           <h2 className="font-semibold text-slate-900">
@@ -422,7 +436,7 @@ function ServiceModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4 overflow-y-auto">
           {/* Nombre */}
           <div>
             <label className="label">Nombre del servicio *</label>
@@ -565,8 +579,11 @@ function ServiceModal({
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
+    ,
+    document.body
   )
 }
 
@@ -580,10 +597,22 @@ function DeleteConfirmModal({
   onCancel: () => void
   onConfirm: () => void
 }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  useEffect(() => {
+    const bodyOverflow = document.body.style.overflow
+    const htmlOverflow = document.documentElement.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = bodyOverflow
+      document.documentElement.style.overflow = htmlOverflow
+    }
+  }, [])
+
+  return createPortal(
+    <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative w-full max-w-sm card p-6 animate-slide-up shadow-2xl shadow-black/50">
+      <div className="relative z-10 h-full overflow-y-auto p-4 flex items-start sm:items-center justify-center">
+        <div className="my-6 w-full max-w-sm card p-6 animate-slide-up shadow-2xl shadow-black/50">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2.5 bg-red-500/10 rounded-xl">
             <AlertTriangle size={20} className="text-red-400" />
@@ -604,7 +633,10 @@ function DeleteConfirmModal({
             Eliminar
           </button>
         </div>
+        </div>
       </div>
     </div>
+    ,
+    document.body
   )
 }

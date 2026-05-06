@@ -4,6 +4,13 @@ import { API_BASE } from './apiBase'
 
 const API = API_BASE
 
+function formatDateKeyLocal(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 
 export interface PublicProfessional {
@@ -86,8 +93,8 @@ export function getDateRange(daysAhead = 30): { start: string; end: string } {
   const end = new Date(start)
   end.setDate(end.getDate() + daysAhead)
   return {
-    start: start.toISOString().split('T')[0],
-    end: end.toISOString().split('T')[0],
+    start: formatDateKeyLocal(start),
+    end: formatDateKeyLocal(end),
   }
 }
 

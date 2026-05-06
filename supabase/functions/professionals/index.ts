@@ -118,6 +118,7 @@ Deno.serve(async (req) => {
         maxAppointmentsPerWeek: professional.max_appointments_per_week,
         serviceId: serviceId ?? undefined,
         serviceMaxAppointmentsPerWeek: serviceWeeklyLimit,
+        professionalTimezone: professional.timezone || "UTC",
       })
 
       return json(availableSlots)

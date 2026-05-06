@@ -28,6 +28,11 @@ export interface WeekDay {
   end_time: string
 }
 
+function normalizeTime(value: string | null | undefined): string {
+  if (!value) return ''
+  return value.slice(0, 5)
+}
+
 // ─── Constantes ─────────────────────────────────────────────────────────────
 
 export const WEEK_DAYS: Omit<WeekDay, 'enabled' | 'start_time' | 'end_time'>[] = [
@@ -163,8 +168,8 @@ export function slotsToWeekDays(slots: AvailabilitySlot[]): WeekDay[] {
     return {
       ...day,
       enabled:    !!slot,
-      start_time: slot?.start_time ?? DEFAULT_START,
-      end_time:   slot?.end_time   ?? DEFAULT_END,
+      start_time: normalizeTime(slot?.start_time) || DEFAULT_START,
+      end_time:   normalizeTime(slot?.end_time) || DEFAULT_END,
     }
   })
 }
