@@ -9,7 +9,7 @@ import { es } from 'date-fns/locale/es'
 import toast from 'react-hot-toast'
 import {
   Calendar, User, Phone, Mail, FileText,
-  Check, X, CheckCircle2, Filter, Search, ChevronDown, Loader2,
+  Check, X, CheckCircle2, Filter, Search, ChevronDown, Loader2, MessageCircle,
 } from 'lucide-react'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
@@ -22,6 +22,7 @@ export interface Appointment {
   starts_at: string
   ends_at: string
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+  patient_attendance_response: 'yes' | 'no' | null
   services: { name: string; duration_minutes: number } | null
 }
 
@@ -76,7 +77,7 @@ export default function AppointmentsPage() {
       .from('appointments')
       .select(`
         id, patient_name, patient_email, patient_phone, patient_notes,
-        starts_at, ends_at, status,
+        starts_at, ends_at, status, patient_attendance_response,
         services (name, duration_minutes)
       `)
       .eq('professional_id', profId)
@@ -282,9 +283,16 @@ function AppointmentRow({
         <span className="text-slate-600 text-xs">{apt.services?.name ?? '—'}</span>
       </td>
       <td className="px-4 py-3 whitespace-nowrap">
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${STATUS_COLORS[apt.status]}`}>
-          {STATUS_LABELS[apt.status]}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${STATUS_COLORS[apt.status]}`}>
+            {STATUS_LABELS[apt.status]}
+          </span>
+          {apt.patient_attendance_response === 'yes' && (
+            <span title="Paciente confirmó asistencia vía WhatsApp" className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-xs font-medium text-green-500 bg-green-500/10 border border-green-500/20">
+              <MessageCircle size={10} /> ✓
+            </span>
+          )}
+        </div>
       </td>
       <td className="px-4 py-3 text-slate-600 text-xs">›</td>
     </tr>
@@ -370,6 +378,16 @@ export function AppointmentDetailModal({
               <div className="flex items-start gap-2 text-sm text-slate-600 mt-2 pt-2 border-t border-slate-200/50">
                 <FileText size={13} className="text-slate-500 mt-0.5 shrink-0" />
                 <span className="italic">{apt.patient_notes}</span>
+              </div>
+            )}
+            {apt.patient_attendance_response && (
+              <div className={`flex items-center gap-2 text-sm mt-2 pt-2 border-t border-slate-200/50 ${
+                apt.patient_attendance_response === 'yes' ? 'text-green-500' : 'text-red-400'
+              }`}>
+                <MessageCircle size={13} />
+                {apt.patient_attendance_response === 'yes'
+                  ? 'Confirmó asistencia vía WhatsApp'
+                  : 'Indicó que no asistirá vía WhatsApp'}
               </div>
             )}
           </div>
