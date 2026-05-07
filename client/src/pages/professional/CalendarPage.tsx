@@ -65,7 +65,7 @@ export default function CalendarPage() {
       .from('appointments')
       .select(`
         id, patient_name, patient_email, patient_phone, patient_notes,
-        starts_at, ends_at, status,
+        starts_at, ends_at, status, patient_attendance_response,
         services (name, duration_minutes)
       `)
       .eq('professional_id', profId)
