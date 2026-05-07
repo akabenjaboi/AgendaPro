@@ -45,6 +45,7 @@ const schema = z.object({
     .regex(/^[a-z0-9-]+$/, 'Solo letras minúsculas, números y guiones'),
   timezone: z.string().min(1, 'Selecciona una zona horaria'),
   booking_link_active: z.boolean(),
+  auto_approve_appointments: z.boolean(),
   max_appointments_per_day: z.union([z.coerce.number().min(1, 'Mínimo 1 cita').max(100, 'Máximo 100 citas'), z.literal('')]).optional(),
   max_appointments_per_week: z.union([z.coerce.number().min(1, 'Mínimo 1 cita').max(1000, 'Máximo 1000 citas'), z.literal('')]).optional(),
 })
@@ -62,6 +63,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
   const [bookingActive, setBookingActive] = useState(true)
+  const [autoApprove, setAutoApprove] = useState(false)
 
   const {
     register,
@@ -80,6 +82,7 @@ export default function SettingsPage() {
       slug: '',
       timezone: 'America/Santiago',
       booking_link_active: true,
+      auto_approve_appointments: false,
       max_appointments_per_day: '',
       max_appointments_per_week: '',
     },
@@ -101,6 +104,7 @@ export default function SettingsPage() {
       if (data) {
         setProfile(data)
         setBookingActive(data.booking_link_active)
+        setAutoApprove(data.auto_approve_appointments)
         reset({
           name: data.name,
           specialty: data.specialty ?? '',
@@ -109,6 +113,7 @@ export default function SettingsPage() {
           slug: data.slug,
           timezone: data.timezone,
           booking_link_active: data.booking_link_active,
+          auto_approve_appointments: data.auto_approve_appointments,
           max_appointments_per_day: data.max_appointments_per_day ?? '',
           max_appointments_per_week: data.max_appointments_per_week ?? '',
         })
@@ -161,6 +166,12 @@ export default function SettingsPage() {
     setValue('booking_link_active', newValue, { shouldDirty: true })
   }
 
+  const handleToggleAutoApprove = () => {
+    const newValue = !autoApprove
+    setAutoApprove(newValue)
+    setValue('auto_approve_appointments', newValue, { shouldDirty: true })
+  }
+
   // ── Guardar perfil ──────────────────────────
   const onSubmit = async (data: FormData) => {
     if (!profile) return
@@ -178,6 +189,7 @@ export default function SettingsPage() {
         slug: data.slug,
         timezone: data.timezone,
         booking_link_active: data.booking_link_active,
+        auto_approve_appointments: data.auto_approve_appointments,
         max_appointments_per_day: data.max_appointments_per_day === '' || data.max_appointments_per_day === undefined
           ? null
           : Number(data.max_appointments_per_day),
@@ -187,6 +199,7 @@ export default function SettingsPage() {
       })
       setProfile(updated)
       setBookingActive(updated.booking_link_active)
+      setAutoApprove(updated.auto_approve_appointments)
       reset(data) // resetear isDirty
       toast.success('Perfil actualizado correctamente')
     } catch (err) {
@@ -450,6 +463,28 @@ export default function SettingsPage() {
               aria-label="Toggle link activo"
             >
               {bookingActive
+                ? <ToggleRight size={36} className="text-brand-500" />
+                : <ToggleLeft size={36} className="text-slate-600" />}
+            </button>
+          </div>
+
+          {/* Toggle auto-aprobación */}
+          <div className="flex items-center justify-between p-4 bg-slate-50/30 rounded-xl">
+            <div>
+              <p className="text-slate-800 font-medium text-sm">Aprobar citas automáticamente</p>
+              <p className="text-slate-500 text-xs mt-0.5">
+                {autoApprove
+                  ? 'Las solicitudes de cita se aprueban automáticamente al crearse'
+                  : 'Las solicitudes de cita requieren aprobación manual'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleAutoApprove}
+              className="shrink-0 transition-colors ml-4"
+              aria-label="Toggle auto-aprobación"
+            >
+              {autoApprove
                 ? <ToggleRight size={36} className="text-brand-500" />
                 : <ToggleLeft size={36} className="text-slate-600" />}
             </button>

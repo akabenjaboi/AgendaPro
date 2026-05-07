@@ -28,8 +28,8 @@ export interface Appointment {
 export type StatusFilter = 'all' | 'pending' | 'confirmed' | 'completed' | 'cancelled'
 
 export const STATUS_LABELS: Record<string, string> = {
-  pending:   'Pendiente',
-  confirmed: 'Confirmada',
+  pending:   'Pendiente de aprobación',
+  confirmed: 'Aprobada',
   completed: 'Completada',
   cancelled: 'Cancelada',
 }
@@ -101,7 +101,7 @@ export default function AppointmentsPage() {
       }
 
       const labels: Record<string, string> = {
-        confirmed: 'Cita confirmada',
+        confirmed: 'Cita aprobada',
         completed: 'Cita marcada como completada',
         cancelled: 'Cita cancelada',
       }
@@ -384,7 +384,7 @@ export function AppointmentDetailModal({
                   className="btn-primary justify-center"
                 >
                   {loading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                  Confirmar cita
+                  Aprobar cita
                 </button>
               )}
               {canComplete && (

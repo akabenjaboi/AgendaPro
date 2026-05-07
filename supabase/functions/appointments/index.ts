@@ -11,6 +11,7 @@ import {
 } from "../_shared/appointments.ts"
 import {
   sendAppointmentCancelledEmail,
+  sendAppointmentConfirmedEmail,
   sendAppointmentCreatedEmail,
   sendAppointmentRescheduledEmailToProfessional,
   sendNewRequestEmailToProfessional,
@@ -68,6 +69,14 @@ Deno.serve(async (req) => {
       })
       if (capacityError) return json(capacityError, 409)
 
+      // Verificar si el profesional tiene auto-aprobación activada
+      const { data: profSettings } = await supabase
+        .from("professionals")
+        .select("auto_approve_appointments")
+        .eq("id", professional_id)
+        .single()
+      const autoApprove = profSettings?.auto_approve_appointments === true
+
       const confirmationToken = createToken()
       const { data: appointment, error: insertError } = await supabase
         .from("appointments")
@@ -80,7 +89,7 @@ Deno.serve(async (req) => {
           patient_notes: patient_notes || null,
           starts_at: startTime.toISOString(),
           ends_at: endTime.toISOString(),
-          status: "pending",
+          status: autoApprove ? "confirmed" : "pending",
           confirmation_token: confirmationToken,
         })
         .select()
@@ -90,21 +99,26 @@ Deno.serve(async (req) => {
 
       const profContact = await getProfessionalContact(professional_id)
       const patientContact = { name: appointment.patient_name, email: appointment.patient_email }
+      const aptDetails = {
+        serviceName: timing.serviceName,
+        startsAt: appointment.starts_at,
+        endsAt: appointment.ends_at,
+        token: appointment.confirmation_token,
+      }
 
-      await Promise.allSettled([
-        sendAppointmentCreatedEmail(patientContact, profContact, {
-          serviceName: timing.serviceName,
-          startsAt: appointment.starts_at,
-          endsAt: appointment.ends_at,
-          token: appointment.confirmation_token,
-        }),
-        sendNewRequestEmailToProfessional(profContact, patientContact, {
-          serviceName: timing.serviceName,
-          startsAt: appointment.starts_at,
-          endsAt: appointment.ends_at,
-          token: appointment.confirmation_token,
-        }),
-      ])
+      if (autoApprove) {
+        // Auto-aprobada: enviar email de cita aprobada al paciente
+        await Promise.allSettled([
+          sendAppointmentConfirmedEmail(patientContact, profContact, aptDetails),
+          sendNewRequestEmailToProfessional(profContact, patientContact, aptDetails),
+        ])
+      } else {
+        // Pendiente: flujo normal
+        await Promise.allSettled([
+          sendAppointmentCreatedEmail(patientContact, profContact, aptDetails),
+          sendNewRequestEmailToProfessional(profContact, patientContact, aptDetails),
+        ])
+      }
 
       return json({
         message: "Cita creada exitosamente",

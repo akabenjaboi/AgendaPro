@@ -105,8 +105,8 @@ export async function sendAppointmentConfirmedEmail(
 
   const html = `
     <div style="font-family: sans-serif; max-w-md; margin: 0 auto;">
-      <h2 style="color: #0f172a;">¡Cita Confirmada, ${patient.name}!</h2>
-      <p>${professional.name} ha <strong>confirmado</strong> tu cita.</p>
+      <h2 style="color: #0f172a;">¡Cita Aprobada, ${patient.name}!</h2>
+      <p>${professional.name} ha <strong>aprobado</strong> tu cita.</p>
       <div style="background-color: #ecfdf5; padding: 15px; border-radius: 8px; border: 1px solid #a7f3d0; margin: 20px 0;">
         <p style="margin: 0; color: #065f46;"><strong>Servicio:</strong> ${apt.serviceName}</p>
         <p style="margin: 5px 0 0 0; color: #065f46;"><strong>Fecha y Hora:</strong> <span style="text-transform: capitalize;">${dateStr}</span></p>
@@ -120,7 +120,7 @@ export async function sendAppointmentConfirmedEmail(
     </div>
   `
 
-  return sendEmail(patient.email, `¡Tu cita con ${professional.name} fue confirmada!`, html)
+  return sendEmail(patient.email, `¡Tu cita con ${professional.name} fue aprobada!`, html)
 }
 
 export async function sendAppointmentConfirmedEmailToProfessional(
@@ -132,7 +132,7 @@ export async function sendAppointmentConfirmedEmailToProfessional(
   const html = `
     <div style="font-family: sans-serif; max-w-md; margin: 0 auto;">
       <h2 style="color: #0f172a;">Hola ${professional.name},</h2>
-      <p>Confirmaste la cita de <strong>${patient.name}</strong>.</p>
+      <p>Aprobaste la cita de <strong>${patient.name}</strong>.</p>
       <div style="background-color: #ecfdf5; padding: 15px; border-radius: 8px; border: 1px solid #a7f3d0; margin: 20px 0;">
         <p style="margin: 0; color: #065f46;"><strong>Paciente:</strong> ${patient.name} (${patient.email})</p>
         <p style="margin: 5px 0 0 0; color: #065f46;"><strong>Servicio:</strong> ${apt.serviceName}</p>
@@ -140,7 +140,7 @@ export async function sendAppointmentConfirmedEmailToProfessional(
       </div>
     </div>
   `
-  return sendEmail(professional.email, `Cita confirmada: ${patient.name}`, html)
+  return sendEmail(professional.email, `Cita aprobada: ${patient.name}`, html)
 }
 
 export async function sendAppointmentRescheduledEmailToProfessional(

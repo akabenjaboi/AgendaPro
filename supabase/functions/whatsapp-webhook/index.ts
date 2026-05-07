@@ -103,7 +103,11 @@ async function resolveReminderByPhone(phone: string): Promise<{ reminder: Remind
   })
 
   if (active.length === 0) return { reminder: null, ambiguous: false }
-  if (active.length > 1) return { reminder: null, ambiguous: true }
+
+  // Si hay varias, tomar la cita más próxima (la que el paciente necesita responder primero)
+  active.sort((a, b) =>
+    new Date(a.appointments.starts_at).getTime() - new Date(b.appointments.starts_at).getTime()
+  )
   return { reminder: active[0], ambiguous: false }
 }
 
@@ -121,18 +125,36 @@ Deno.serve(async (req) => {
     const params = new URLSearchParams(rawBody)
     const from = params.get("From")
     const incomingBody = params.get("Body")?.trim() ?? ""
-    if (!from || !incomingBody) {
+    const buttonPayload = params.get("ButtonPayload")?.trim() ?? ""
+
+    // Primero intentar leer la decisión del botón interactivo (Quick Reply)
+    let decision: "yes" | "no" | null = null
+    if (buttonPayload === "confirm_yes") decision = "yes"
+    else if (buttonPayload === "confirm_no") decision = "no"
+
+    // Fallback: parsear texto libre si no vino de un botón
+    if (!decision && incomingBody) decision = parseDecision(incomingBody)
+
+    if (!from || (!incomingBody && !buttonPayload)) {
       return twiml("No pudimos procesar tu respuesta. Intenta nuevamente con SI o NO.")
     }
-
-    const decision = parseDecision(incomingBody)
     if (!decision) {
       return twiml("Respuesta no reconocida. Por favor responde SI para confirmar o NO para cancelar tu cita.")
     }
 
-    const token = parseToken(incomingBody)
     const phone = normalizePhone(from)
-    const resolved = token ? { reminder: await resolveReminderByToken(token), ambiguous: false } : await resolveReminderByPhone(phone)
+    let resolved: { reminder: ReminderWithAppointment | null; ambiguous: boolean }
+
+    if (buttonPayload) {
+      // Botón interactivo: resolver por teléfono (no hay token en el mensaje)
+      resolved = await resolveReminderByPhone(phone)
+    } else {
+      // Texto libre: intentar extraer token primero
+      const token = parseToken(incomingBody)
+      resolved = token
+        ? { reminder: await resolveReminderByToken(token), ambiguous: false }
+        : await resolveReminderByPhone(phone)
+    }
 
     if (resolved.ambiguous) {
       return twiml("Tienes más de una cita pendiente. Responde incluyendo el codigo del recordatorio. Ejemplo: NO ABC12345")

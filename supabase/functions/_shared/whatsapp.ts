@@ -43,37 +43,59 @@ export async function validateTwilioSignature(req: Request, rawBody: string): Pr
   return expected === signature
 }
 
-export async function sendWhatsAppMessage(toPhone: string, body: string): Promise<TwilioMessageResponse> {
+function twilioRequest(params: URLSearchParams): Promise<TwilioMessageResponse> {
   const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID")
   const authToken = Deno.env.get("TWILIO_AUTH_TOKEN")
-  const from = Deno.env.get("TWILIO_WHATSAPP_FROM")
 
-  if (!accountSid || !authToken || !from) {
-    throw new Error("Missing Twilio env vars: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM")
+  if (!accountSid || !authToken) {
+    throw new Error("Missing Twilio env vars: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN")
   }
 
   const endpoint = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`
-  const params = new URLSearchParams({
-    From: toTwilioAddress(from),
-    To: toTwilioAddress(toPhone),
-    Body: body,
-  })
-
   const authHeader = `Basic ${btoa(`${accountSid}:${authToken}`)}`
-  const response = await fetch(endpoint, {
+
+  return fetch(endpoint, {
     method: "POST",
     headers: {
       Authorization: authHeader,
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: params.toString(),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const payload = await response.text()
+      throw new Error(`Twilio request failed (${response.status}): ${payload}`)
+    }
+    const data = await response.json()
+    return { sid: data.sid, status: data.status }
   })
+}
 
-  if (!response.ok) {
-    const payload = await response.text()
-    throw new Error(`Twilio request failed (${response.status}): ${payload}`)
-  }
+export async function sendWhatsAppMessage(toPhone: string, body: string): Promise<TwilioMessageResponse> {
+  const from = Deno.env.get("TWILIO_WHATSAPP_FROM")
+  if (!from) throw new Error("Missing TWILIO_WHATSAPP_FROM")
 
-  const data = await response.json()
-  return { sid: data.sid, status: data.status }
+  const params = new URLSearchParams({
+    From: toTwilioAddress(from),
+    To: toTwilioAddress(toPhone),
+    Body: body,
+  })
+  return twilioRequest(params)
+}
+
+export async function sendWhatsAppTemplate(
+  toPhone: string,
+  contentSid: string,
+  contentVariables: Record<string, string>,
+): Promise<TwilioMessageResponse> {
+  const from = Deno.env.get("TWILIO_WHATSAPP_FROM")
+  if (!from) throw new Error("Missing TWILIO_WHATSAPP_FROM")
+
+  const params = new URLSearchParams({
+    From: toTwilioAddress(from),
+    To: toTwilioAddress(toPhone),
+    ContentSid: contentSid,
+    ContentVariables: JSON.stringify(contentVariables),
+  })
+  return twilioRequest(params)
 }

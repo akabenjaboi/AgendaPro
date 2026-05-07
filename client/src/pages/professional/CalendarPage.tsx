@@ -89,7 +89,7 @@ export default function CalendarPage() {
       }
 
       const labels: Record<string, string> = {
-        confirmed: 'Cita confirmada',
+        confirmed: 'Cita aprobada',
         completed: 'Cita marcada como completada',
         cancelled: 'Cita cancelada',
       }

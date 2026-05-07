@@ -1,7 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { error, json } from "../_shared/http.ts"
 import { supabase } from "../_shared/supabase.ts"
-import { normalizePhone, sendWhatsAppMessage } from "../_shared/whatsapp.ts"
+import { normalizePhone, sendWhatsAppTemplate } from "../_shared/whatsapp.ts"
+
+const REMINDER_CONTENT_SID = Deno.env.get("WHATSAPP_REMINDER_CONTENT_SID") || "HX7346c51b5e8e92ea26388416545449bf"
 
 type AppointmentCandidate = {
   id: string
@@ -25,8 +27,8 @@ function getProfessionalTimezone(
   return item?.timezone || "UTC"
 }
 
-function createReminderMessage(apt: AppointmentCandidate, responseToken: string): string {
-  const when = new Date(apt.starts_at).toLocaleString("es-CL", {
+function formatWhen(apt: AppointmentCandidate): string {
+  return new Date(apt.starts_at).toLocaleString("es-CL", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -35,11 +37,6 @@ function createReminderMessage(apt: AppointmentCandidate, responseToken: string)
     hour12: false,
     timeZone: getProfessionalTimezone(apt.professionals),
   })
-  return [
-    `Hola ${apt.patient_name}, te recordamos tu cita de ${getServiceName(apt.services)} para ${when}.`,
-    "Responde SI para confirmar asistencia o NO para cancelar la cita.",
-    `Codigo: ${responseToken}`,
-  ].join("\n")
 }
 
 Deno.serve(async (req) => {
@@ -97,11 +94,14 @@ Deno.serve(async (req) => {
       }
 
       const responseToken = crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase()
-      const messageBody = createReminderMessage(apt, responseToken)
 
       try {
         const normalizedPhone = normalizePhone(apt.patient_phone)
-        const twilio = await sendWhatsAppMessage(normalizedPhone, messageBody)
+        const twilio = await sendWhatsAppTemplate(normalizedPhone, REMINDER_CONTENT_SID, {
+          "1": apt.patient_name,
+          "2": getServiceName(apt.services),
+          "3": formatWhen(apt),
+        })
         const { error: insertError } = await supabase
           .from("whatsapp_reminders")
           .insert({

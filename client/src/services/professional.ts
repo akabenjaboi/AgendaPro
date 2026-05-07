@@ -12,6 +12,7 @@ export interface ProfessionalProfile {
   avatar_url: string | null
   timezone: string
   booking_link_active: boolean
+  auto_approve_appointments: boolean
   max_appointments_per_day: number | null
   max_appointments_per_week: number | null
   created_at: string
@@ -25,6 +26,7 @@ export interface UpdateProfilePayload {
   slug: string
   timezone: string
   booking_link_active: boolean
+  auto_approve_appointments: boolean
   max_appointments_per_day: number | null
   max_appointments_per_week: number | null
 }

@@ -35,8 +35,8 @@ interface Appointment {
 }
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
-  pending: { label: 'Pendiente', className: 'badge-pending' },
-  confirmed: { label: 'Confirmada', className: 'badge-confirmed' },
+  pending: { label: 'Pendiente de aprobación', className: 'badge-pending' },
+  confirmed: { label: 'Aprobada', className: 'badge-confirmed' },
   cancelled: { label: 'Cancelada', className: 'badge-cancelled' },
   completed: { label: 'Completada', className: 'badge-completed' },
   no_show: { label: 'No asistió', className: 'badge-no-show' },
