@@ -10,6 +10,7 @@ export interface AppointmentDetails {
   startsAt: string
   endsAt: string
   token?: string
+  timezone?: string
 }
 
 const resendApiKey = Deno.env.get("RESEND_API_KEY")
@@ -18,7 +19,7 @@ const appUrl = Deno.env.get("APP_URL") || "http://localhost:5173"
 const rescheduleLimitHoursBefore = Number(Deno.env.get("RESCHEDULE_LIMIT_HOURS_BEFORE") ?? 24)
 const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "Blinktime <notificaciones@blinktime.lat>"
 
-function formatDate(iso: string) {
+function formatDate(iso: string, timezone?: string) {
   return new Date(iso).toLocaleString("es-CL", {
     weekday: "long",
     day: "numeric",
@@ -27,6 +28,7 @@ function formatDate(iso: string) {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
+    timeZone: timezone || "America/Santiago",
   })
 }
 
@@ -50,7 +52,7 @@ export async function sendAppointmentCreatedEmail(
   professional: EmailContact,
   apt: AppointmentDetails,
 ) {
-  const dateStr = formatDate(apt.startsAt)
+  const dateStr = formatDate(apt.startsAt, apt.timezone)
   const cancelUrl = `${appUrl}/cancel/${apt.token}`
 
   const html = `
@@ -78,7 +80,7 @@ export async function sendNewRequestEmailToProfessional(
   patient: EmailContact,
   apt: AppointmentDetails,
 ) {
-  const dateStr = formatDate(apt.startsAt)
+  const dateStr = formatDate(apt.startsAt, apt.timezone)
   const html = `
     <div style="font-family: sans-serif; max-w-md; margin: 0 auto;">
       <h2 style="color: #0f172a;">Hola ${professional.name},</h2>
@@ -99,7 +101,7 @@ export async function sendAppointmentConfirmedEmail(
   professional: EmailContact,
   apt: AppointmentDetails,
 ) {
-  const dateStr = formatDate(apt.startsAt)
+  const dateStr = formatDate(apt.startsAt, apt.timezone)
   const cancelUrl = `${appUrl}/cancel/${apt.token}`
   const rescheduleUrl = `${appUrl}/reschedule/${apt.token}`
 
@@ -128,7 +130,7 @@ export async function sendAppointmentConfirmedEmailToProfessional(
   patient: EmailContact,
   apt: AppointmentDetails,
 ) {
-  const dateStr = formatDate(apt.startsAt)
+  const dateStr = formatDate(apt.startsAt, apt.timezone)
   const html = `
     <div style="font-family: sans-serif; max-w-md; margin: 0 auto;">
       <h2 style="color: #0f172a;">Hola ${professional.name},</h2>
@@ -149,8 +151,8 @@ export async function sendAppointmentRescheduledEmailToProfessional(
   apt: AppointmentDetails,
   previousStartsAt: string,
 ) {
-  const previousDateStr = formatDate(previousStartsAt)
-  const newDateStr = formatDate(apt.startsAt)
+  const previousDateStr = formatDate(previousStartsAt, apt.timezone)
+  const newDateStr = formatDate(apt.startsAt, apt.timezone)
   const html = `
     <div style="font-family: sans-serif; max-w-md; margin: 0 auto;">
       <h2 style="color: #0f172a;">Hola ${professional.name},</h2>
@@ -173,7 +175,7 @@ export async function sendAppointmentCancelledEmail(
   cancelledBy: "patient" | "professional",
   reason?: string,
 ) {
-  const dateStr = formatDate(apt.startsAt)
+  const dateStr = formatDate(apt.startsAt, apt.timezone)
   const actor = cancelledBy === "patient" ? "paciente" : "profesional"
 
   const patientHtml = `

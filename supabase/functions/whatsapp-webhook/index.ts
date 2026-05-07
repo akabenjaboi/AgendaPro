@@ -215,6 +215,11 @@ Deno.serve(async (req) => {
     if (appointmentUpdateError) throw appointmentUpdateError
 
     const professional = await getProfessionalContact(appointment.professional_id)
+    const { data: profTz } = await supabase
+      .from("professionals")
+      .select("timezone")
+      .eq("id", appointment.professional_id)
+      .single()
     const patient = { name: appointment.patient_name, email: appointment.patient_email }
     await sendAppointmentCancelledEmail(
       patient,
@@ -223,6 +228,7 @@ Deno.serve(async (req) => {
         serviceName: serviceName(appointment.services),
         startsAt: appointment.starts_at,
         endsAt: appointment.ends_at,
+        timezone: profTz?.timezone || "America/Santiago",
       },
       "patient",
       cancellationReason,

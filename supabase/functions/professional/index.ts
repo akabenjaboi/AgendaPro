@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
     if (status === "confirmed" || status === "cancelled") {
       const { data: fullApt } = await supabase
         .from("appointments")
-        .select("patient_name, patient_email, starts_at, ends_at, professional_id, services(name), confirmation_token")
+        .select("patient_name, patient_email, starts_at, ends_at, professional_id, services(name), confirmation_token, professionals(timezone)")
         .eq("id", appointmentId)
         .single()
 
@@ -110,6 +110,7 @@ Deno.serve(async (req) => {
           startsAt: fullApt.starts_at,
           endsAt: fullApt.ends_at,
           token: fullApt.confirmation_token,
+          timezone: ((fullApt as Record<string, unknown>).professionals as { timezone?: string } | null)?.timezone || "America/Santiago",
         }
 
         if (status === "confirmed") {

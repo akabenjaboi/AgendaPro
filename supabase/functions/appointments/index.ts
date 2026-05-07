@@ -72,10 +72,11 @@ Deno.serve(async (req) => {
       // Verificar si el profesional tiene auto-aprobación activada
       const { data: profSettings } = await supabase
         .from("professionals")
-        .select("auto_approve_appointments")
+        .select("auto_approve_appointments, timezone")
         .eq("id", professional_id)
         .single()
       const autoApprove = profSettings?.auto_approve_appointments === true
+      const profTimezone = profSettings?.timezone || "America/Santiago"
 
       const confirmationToken = createToken()
       const { data: appointment, error: insertError } = await supabase
@@ -104,6 +105,7 @@ Deno.serve(async (req) => {
         startsAt: appointment.starts_at,
         endsAt: appointment.ends_at,
         token: appointment.confirmation_token,
+        timezone: profTimezone,
       }
 
       if (autoApprove) {
@@ -185,11 +187,13 @@ Deno.serve(async (req) => {
 
       if (fullApt) {
         const profContact = await getProfessionalContact(fullApt.professional_id)
+        const profTzData = await supabase.from("professionals").select("timezone").eq("id", fullApt.professional_id).single()
         const patientContact = { name: fullApt.patient_name, email: fullApt.patient_email }
         await sendAppointmentCancelledEmail(patientContact, profContact, {
           serviceName: (fullApt.services as { name?: string } | null)?.name || "Servicio",
           startsAt: fullApt.starts_at,
           endsAt: fullApt.ends_at,
+          timezone: profTzData.data?.timezone || "America/Santiago",
         }, "patient", reason).catch(console.error)
       }
 
@@ -282,6 +286,7 @@ Deno.serve(async (req) => {
       if (updateError || !updated) throw updateError
 
       const profContact = await getProfessionalContact(appointment.professional_id)
+      const profTzReschedule = await supabase.from("professionals").select("timezone").eq("id", appointment.professional_id).single()
       const patientContact = { name: appointment.patient_name, email: appointment.patient_email }
       await sendAppointmentRescheduledEmailToProfessional(
         profContact,
@@ -291,6 +296,7 @@ Deno.serve(async (req) => {
           startsAt: updated.starts_at,
           endsAt: updated.ends_at,
           token,
+          timezone: profTzReschedule.data?.timezone || "America/Santiago",
         },
         previousStartsAt,
       ).catch(console.error)
