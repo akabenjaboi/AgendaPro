@@ -49,17 +49,18 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === "DELETE") {
+      // Eliminación definitiva, en cualquier estado. No se notifica al paciente
+      // (para avisarle, el profesional debe cancelar la cita en vez de eliminarla).
+      // En la BD: los recordatorios de WhatsApp se borran en cascada y los tests
+      // del paciente se conservan en su historial (appointment_id queda en null).
       const { data: existing, error: getError } = await supabase
         .from("appointments")
-        .select("id, status")
+        .select("id")
         .eq("id", appointmentId)
         .eq("professional_id", auth.professionalId)
         .single()
 
       if (getError || !existing) return error("Cita no encontrada", "NOT_FOUND", 404)
-      if (existing.status !== "cancelled") {
-        return error("Solo se pueden eliminar citas canceladas", "INVALID_STATUS", 400)
-      }
 
       const { error: deleteError } = await supabase
         .from("appointments")

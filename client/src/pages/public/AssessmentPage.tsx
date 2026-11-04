@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   Calendar, CheckCircle, AlertTriangle, XCircle, Loader2, ArrowLeft, ClipboardList, Heart, Phone,
@@ -62,16 +62,9 @@ export default function AssessmentPage() {
     return list
   }, [data, answers])
 
-  // Referencia a los pasos actuales: tras responder, la lista puede crecer
-  // (p.ej. aparece la pregunta adicional) y el avance debe verla.
-  const stepsRef = useRef<Step[]>(steps)
-  useEffect(() => { stepsRef.current = steps }, [steps])
-
-  const advancingRef = useRef(false)
-
+  // Elegir una opción solo la marca; se avanza con el botón "Continuar".
   const choose = (step: Step, value: number) => {
-    if (!data || advancingRef.current) return
-    advancingRef.current = true
+    if (!data) return
     const code = data.instruments[step.instrument].code
     setAnswers(prev => {
       const current = prev[code]
@@ -80,14 +73,13 @@ export default function AssessmentPage() {
         : { ...current, extra: value }
       return { ...prev, [code]: next }
     })
-    // Avanza solo, con una pequeña pausa para que se vea la opción elegida.
-    setTimeout(() => {
-      advancingRef.current = false
-      setStepIndex(i => {
-        if (i >= stepsRef.current.length - 1) { setState('review'); return i }
-        return i + 1
-      })
-    }, 180)
+  }
+
+  // `steps` ya refleja la respuesta recién elegida (p.ej. si aparece la
+  // pregunta adicional del PHQ-9), porque el clic ocurre tras re-renderizar.
+  const goNext = () => {
+    if (stepIndex >= steps.length - 1) setState('review')
+    else setStepIndex(i => i + 1)
   }
 
   const submit = async () => {
@@ -277,21 +269,20 @@ export default function AssessmentPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => (stepIndex === 0 ? setState('intro') : setStepIndex(i => i - 1))}
-            className="btn-ghost text-sm px-2"
+            className="btn-secondary justify-center px-4"
           >
             <ArrowLeft size={14} /> Atrás
           </button>
-          {selected !== null && selected >= 0 && (
-            <button
-              onClick={() => (stepIndex >= steps.length - 1 ? setState('review') : setStepIndex(i => i + 1))}
-              className="btn-secondary text-sm"
-            >
-              Siguiente
-            </button>
-          )}
+          <button
+            onClick={goNext}
+            disabled={selected === null || selected < 0}
+            className="btn-primary flex-1 justify-center"
+          >
+            Continuar
+          </button>
         </div>
 
         <p className="text-[11px] text-slate-400 leading-relaxed">{instrument.citation}</p>

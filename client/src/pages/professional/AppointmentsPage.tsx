@@ -10,7 +10,7 @@ import { es } from 'date-fns/locale/es'
 import toast from 'react-hot-toast'
 import {
   Calendar, User, Phone, Mail, FileText,
-  Check, X, CheckCircle2, Filter, Search, ChevronDown, Loader2, MessageCircle,
+  Check, X, CheckCircle2, Filter, Search, ChevronDown, Loader2, MessageCircle, Trash2, AlertTriangle,
 } from 'lucide-react'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
@@ -115,12 +115,15 @@ export default function AppointmentsPage() {
     }
   }
 
-  const deleteCancelledAppointment = async (id: string) => {
+  const [toDelete, setToDelete] = useState<Appointment | null>(null)
+
+  const deleteAppointment = async (id: string) => {
     setActionLoading(true)
     try {
       await api.delete(`/professional/appointments/${id}`)
       setAppointments(prev => prev.filter(a => a.id !== id))
       setSelected(prev => (prev?.id === id ? null : prev))
+      setToDelete(null)
       toast.success('Cita eliminada')
     } catch {
       toast.error('Error al eliminar la cita')
@@ -231,6 +234,7 @@ export default function AppointmentsPage() {
                     key={apt.id}
                     appointment={apt}
                     onClick={() => setSelected(apt)}
+                    onDelete={() => setToDelete(apt)}
                   />
                 ))}
               </tbody>
@@ -246,7 +250,17 @@ export default function AppointmentsPage() {
           loading={actionLoading}
           onClose={() => setSelected(null)}
           onUpdateStatus={updateStatus}
-          onDeleteCancelled={deleteCancelledAppointment}
+          onDelete={deleteAppointment}
+        />
+      )}
+
+      {/* Confirmación de eliminación desde la tabla */}
+      {toDelete && (
+        <DeleteAppointmentDialog
+          appointment={toDelete}
+          loading={actionLoading}
+          onCancel={() => setToDelete(null)}
+          onConfirm={() => deleteAppointment(toDelete.id)}
         />
       )}
     </div>
@@ -257,9 +271,11 @@ export default function AppointmentsPage() {
 function AppointmentRow({
   appointment: apt,
   onClick,
+  onDelete,
 }: {
   appointment: Appointment
   onClick: () => void
+  onDelete: () => void
 }) {
   const start = parseISO(apt.starts_at)
   const inPast = isPast(parseISO(apt.ends_at))
@@ -295,7 +311,16 @@ function AppointmentRow({
           )}
         </div>
       </td>
-      <td className="px-4 py-3 text-slate-600 text-xs">›</td>
+      <td className="px-4 py-3 text-right whitespace-nowrap">
+        <button
+          onClick={e => { e.stopPropagation(); onDelete() }}
+          title="Eliminar cita"
+          aria-label={`Eliminar cita de ${apt.patient_name}`}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+        >
+          <Trash2 size={14} />
+        </button>
+      </td>
     </tr>
   )
 }
@@ -306,14 +331,15 @@ export function AppointmentDetailModal({
   loading,
   onClose,
   onUpdateStatus,
-  onDeleteCancelled,
+  onDelete,
 }: {
   appointment: Appointment
   loading: boolean
   onClose: () => void
   onUpdateStatus: (id: string, status: string) => Promise<void>
-  onDeleteCancelled: (id: string) => Promise<void>
+  onDelete: (id: string) => Promise<void>
 }) {
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const start = parseISO(apt.starts_at)
   const end   = parseISO(apt.ends_at)
 
@@ -326,7 +352,6 @@ export function AppointmentDetailModal({
   const canConfirm  = apt.status === 'pending'
   const canComplete = apt.status === 'confirmed' || apt.status === 'pending'
   const canCancel   = apt.status !== 'cancelled' && apt.status !== 'completed'
-  const canDelete   = apt.status === 'cancelled'
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-4 overflow-y-auto">
@@ -402,7 +427,7 @@ export function AppointmentDetailModal({
           />
 
           {/* Acciones */}
-          {(canConfirm || canComplete || canCancel || canDelete) && (
+          {(canConfirm || canComplete || canCancel) && (
             <div className="flex flex-col gap-2">
               {canConfirm && (
                 <button
@@ -435,20 +460,97 @@ export function AppointmentDetailModal({
                   Cancelar cita
                 </button>
               )}
-              {canDelete && (
-                <button
-                  onClick={() => onDeleteCancelled(apt.id)}
-                  disabled={loading}
-                  className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-xl text-sm font-medium
-                             text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors"
-                >
-                  {loading ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
-                  Eliminar cita cancelada
-                </button>
-              )}
             </div>
           )}
+
+          {/* Eliminar definitivamente */}
+          {!confirmingDelete ? (
+            <button
+              onClick={() => setConfirmingDelete(true)}
+              disabled={loading}
+              className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-xl text-sm font-medium
+                         text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <Trash2 size={14} />
+              Eliminar cita
+            </button>
+          ) : (
+            <DeleteConfirmBox
+              status={apt.status}
+              loading={loading}
+              onCancel={() => setConfirmingDelete(false)}
+              onConfirm={() => onDelete(apt.id)}
+            />
+          )}
         </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+// ─── Confirmación de eliminación ─────────────────────────────────────────────
+function DeleteConfirmBox({ status, loading, onCancel, onConfirm }: {
+  status: Appointment['status']
+  loading: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  const isActive = status === 'pending' || status === 'confirmed'
+  return (
+    <div className="rounded-xl border border-red-200 bg-red-50/60 p-4 space-y-3">
+      <div className="flex items-start gap-2 text-sm text-red-800">
+        <AlertTriangle size={15} className="shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <p className="font-medium">¿Eliminar esta cita definitivamente?</p>
+          <p className="text-xs text-red-700/90">
+            Se borrará junto con sus recordatorios y no se puede deshacer. Los tests que haya
+            respondido el paciente se conservan en su historial.
+          </p>
+          {isActive && (
+            <p className="text-xs text-red-700/90">
+              <strong>No se avisará al paciente.</strong> Si quieres notificarle, usa “Cancelar cita”.
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <button onClick={onCancel} disabled={loading} className="btn-secondary flex-1 justify-center text-sm py-2">
+          No, volver
+        </button>
+        <button onClick={onConfirm} disabled={loading} className="flex-1 flex items-center justify-center gap-2 rounded-xl text-sm font-semibold py-2 bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50">
+          {loading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+          Sí, eliminar
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function DeleteAppointmentDialog({ appointment: apt, loading, onCancel, onConfirm }: {
+  appointment: Appointment
+  loading: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onCancel])
+
+  return createPortal(
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative w-full max-w-sm card p-5 space-y-4 animate-slide-up shadow-2xl">
+        <div>
+          <p className="font-semibold text-slate-900">{apt.patient_name}</p>
+          <p className="text-sm text-slate-500 capitalize">
+            {format(parseISO(apt.starts_at), "EEEE d 'de' MMMM, HH:mm", { locale: es })}
+            {apt.services && ` · ${apt.services.name}`}
+          </p>
+        </div>
+        <DeleteConfirmBox status={apt.status} loading={loading} onCancel={onCancel} onConfirm={onConfirm} />
       </div>
     </div>,
     document.body
