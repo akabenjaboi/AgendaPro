@@ -248,7 +248,7 @@ export default function SettingsPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
         {/* ── SECCIÓN: Perfil ─────────────────── */}
-        <Section icon={<User size={18} className="text-brand-400" />} title="Información personal">
+        <Section tour="settings-profile" icon={<User size={18} className="text-brand-400" />} title="Información personal">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Nombre */}
             <div className="sm:col-span-2">
@@ -376,7 +376,7 @@ export default function SettingsPage() {
         </Section>
 
         {/* ── SECCIÓN: Link público ───────────── */}
-        <Section icon={<Link2 size={18} className="text-brand-400" />} title="Link de agendamiento">
+        <Section tour="settings-link" icon={<Link2 size={18} className="text-brand-400" />} title="Link de agendamiento">
           {/* Vista previa del link */}
           <div className="bg-slate-50/50 rounded-xl p-4 flex items-center gap-3 mb-4">
             <div className={`w-2.5 h-2.5 rounded-full shrink-0 transition-colors ${
@@ -502,6 +502,7 @@ export default function SettingsPage() {
             <span />
           )}
           <button
+            data-tour="settings-save"
             type="submit"
             disabled={saving || slugStatus === 'taken'}
             className="btn-primary px-6 py-3"
@@ -531,13 +532,15 @@ function Section({
   icon,
   title,
   children,
+  tour,
 }: {
   icon: React.ReactNode
   title: string
   children: React.ReactNode
+  tour?: string
 }) {
   return (
-    <div className="card overflow-hidden">
+    <div data-tour={tour} className="card overflow-hidden">
       <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-200/50">
         {icon}
         <h2 className="font-semibold text-slate-900 text-sm">{title}</h2>

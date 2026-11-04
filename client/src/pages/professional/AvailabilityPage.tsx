@@ -178,7 +178,7 @@ export default function AvailabilityPage() {
       </div>
 
       {/* ── Horario semanal ──────────────────── */}
-      <div className="card overflow-hidden">
+      <div data-tour="availability-weekly" className="card overflow-hidden">
         <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-200/50">
           <Clock size={17} className="text-brand-400" />
           <h2 className="font-semibold text-slate-900 text-sm">Horario semanal</h2>
@@ -209,7 +209,7 @@ export default function AvailabilityPage() {
       </div>
 
       {/* ── Fechas bloqueadas ────────────────── */}
-      <div className="card overflow-hidden">
+      <div data-tour="availability-blocked" className="card overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/50">
           <div className="flex items-center gap-3">
             <CalendarOff size={17} className="text-brand-400" />

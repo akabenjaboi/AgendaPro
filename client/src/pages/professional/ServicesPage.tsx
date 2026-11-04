@@ -180,7 +180,7 @@ export default function ServicesPage() {
               : `${active.length} activo${active.length !== 1 ? 's' : ''} · ${inactive.length} inactivo${inactive.length !== 1 ? 's' : ''}`}
           </p>
         </div>
-        <button onClick={openCreate} className="btn-primary">
+        <button data-tour="services-new" onClick={openCreate} className="btn-primary">
           <Plus size={16} />
           Nuevo servicio
         </button>
@@ -188,7 +188,7 @@ export default function ServicesPage() {
 
       {/* Estado vacío */}
       {services.length === 0 && (
-        <div className="card p-12 text-center">
+        <div data-tour="services-list" className="card p-12 text-center">
           <PackageOpen className="w-12 h-12 text-slate-600 mx-auto mb-4" />
           <h2 className="text-slate-700 font-semibold mb-2">Sin servicios todavía</h2>
           <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">
@@ -203,7 +203,7 @@ export default function ServicesPage() {
 
       {/* Grid de servicios activos */}
       {active.length > 0 && (
-        <div>
+        <div data-tour="services-list">
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
             Activos
           </h2>

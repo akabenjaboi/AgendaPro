@@ -166,7 +166,7 @@ export default function AppointmentsPage() {
       </div>
 
       {/* Stats rápidas */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div data-tour="appointments-stats" className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {(['pending', 'confirmed', 'completed', 'cancelled'] as const).map(s => (
           <button
             key={s}
@@ -182,7 +182,7 @@ export default function AppointmentsPage() {
       </div>
 
       {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div data-tour="appointments-filters" className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={15} />
           <input
@@ -216,7 +216,7 @@ export default function AppointmentsPage() {
           <p className="text-slate-600">No hay citas que coincidan con tu búsqueda</p>
         </div>
       ) : (
-        <div className="card overflow-hidden">
+        <div data-tour="appointments-table" className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -313,6 +313,7 @@ function AppointmentRow({
       </td>
       <td className="px-4 py-3 text-right whitespace-nowrap">
         <button
+          data-tour="appointments-delete"
           onClick={e => { e.stopPropagation(); onDelete() }}
           title="Eliminar cita"
           aria-label={`Eliminar cita de ${apt.patient_name}`}

@@ -1,4 +1,5 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useOnboarding } from '../../onboarding/useOnboarding'
 import { useAuthStore } from '../../stores/authStore'
 import toast from 'react-hot-toast'
 import {
@@ -9,6 +10,7 @@ import {
   Briefcase,
   Settings,
   LogOut,
+  HelpCircle,
   Menu,
   X,
 } from 'lucide-react'
@@ -27,6 +29,8 @@ export default function ProfessionalLayout() {
   const { user, signOut } = useAuthStore()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { pathname } = useLocation()
+  const { replay } = useOnboarding(user?.id, pathname)
 
   const handleSignOut = async () => {
     await signOut()
@@ -34,7 +38,7 @@ export default function ProfessionalLayout() {
     navigate('/login')
   }
 
-  const SidebarContent = () => (
+  const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="px-4 py-6">
@@ -50,7 +54,7 @@ export default function ProfessionalLayout() {
       </div>
 
       {/* Navegación */}
-      <nav className="flex-1 px-3 space-y-1">
+      <nav data-tour="nav" className="flex-1 px-3 space-y-1">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
@@ -78,6 +82,15 @@ export default function ProfessionalLayout() {
           </div>
         </div>
         <button
+          data-tour="tour-replay"
+          onClick={() => { setSidebarOpen(false); replay() }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:text-brand-900 hover:bg-brand-50
+                     transition-all duration-200 text-sm font-medium"
+        >
+          <HelpCircle size={16} />
+          Ver tutorial
+        </button>
+        <button
           onClick={handleSignOut}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:text-red-400 hover:bg-red-500/10 
                      transition-all duration-200 text-sm font-medium"
@@ -93,7 +106,7 @@ export default function ProfessionalLayout() {
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       {/* Sidebar desktop */}
       <aside className="hidden lg:flex flex-col w-64 bg-white/50 border-r border-slate-200/50">
-        <SidebarContent />
+        {sidebarContent}
       </aside>
 
       {/* Sidebar mobile overlay */}
@@ -110,7 +123,7 @@ export default function ProfessionalLayout() {
             >
               <X size={18} />
             </button>
-            <SidebarContent />
+            {sidebarContent}
           </aside>
         </div>
       )}
@@ -120,6 +133,8 @@ export default function ProfessionalLayout() {
       {/* Topbar mobile */}
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-slate-200/50 bg-white/50">
           <button
+            data-tour="mobile-menu"
+            aria-label="Abrir menú"
             onClick={() => setSidebarOpen(true)}
             className="p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors"
           >

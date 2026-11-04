@@ -303,3 +303,49 @@
 .rbc-agenda-empty {
   @apply text-sm text-slate-500 py-10 text-center;
 }
+
+/* ─── Tutorial guiado (driver.js) ────────────────────────────────────────── */
+.driver-popover.blinktime-tour {
+  @apply bg-white text-slate-700 rounded-2xl shadow-2xl border border-slate-200 p-5 max-w-sm font-sans;
+}
+.driver-popover.blinktime-tour .driver-popover-title {
+  @apply text-base font-bold text-slate-900 pr-6 leading-snug;
+}
+.driver-popover.blinktime-tour .driver-popover-description {
+  @apply text-sm text-slate-600 leading-relaxed mt-1.5;
+}
+.driver-popover.blinktime-tour .driver-popover-description b {
+  @apply font-semibold text-slate-800;
+}
+.driver-popover.blinktime-tour .driver-popover-close-btn {
+  @apply text-slate-400 hover:text-slate-700 w-8 h-8 top-2 right-2 rounded-lg hover:bg-slate-100 text-xl;
+}
+.driver-popover.blinktime-tour .driver-popover-footer {
+  @apply mt-4 flex items-center gap-2 flex-wrap;
+}
+.driver-popover.blinktime-tour .driver-popover-progress-text {
+  @apply text-xs font-medium text-slate-400;
+}
+.driver-popover.blinktime-tour .driver-popover-navigation-btns {
+  @apply flex gap-2 ml-auto;
+}
+.driver-popover.blinktime-tour .driver-popover-navigation-btns button {
+  @apply text-sm font-semibold rounded-xl px-3.5 py-2 border-0 transition-colors shadow-none;
+  text-shadow: none;
+}
+.driver-popover.blinktime-tour .driver-popover-prev-btn {
+  @apply bg-slate-100 text-slate-600 hover:bg-slate-200;
+}
+.driver-popover.blinktime-tour .driver-popover-next-btn {
+  @apply bg-brand-500 text-slate-900 hover:bg-brand-600;
+}
+.driver-popover.blinktime-tour .driver-popover-btn-disabled {
+  @apply hidden;
+}
+.blinktime-tour-skip {
+  @apply text-xs font-medium text-slate-400 hover:text-slate-700 underline underline-offset-2 mr-1;
+}
+.driver-popover.blinktime-tour .driver-popover-arrow-side-left.driver-popover-arrow { border-left-color: #fff; }
+.driver-popover.blinktime-tour .driver-popover-arrow-side-right.driver-popover-arrow { border-right-color: #fff; }
+.driver-popover.blinktime-tour .driver-popover-arrow-side-top.driver-popover-arrow { border-top-color: #fff; }
+.driver-popover.blinktime-tour .driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: #fff; }

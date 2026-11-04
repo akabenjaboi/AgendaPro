@@ -132,7 +132,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Link público */}
-        <div className="card p-3 flex items-center gap-3 min-w-0">
+        <div data-tour="booking-link" className="card p-3 flex items-center gap-3 min-w-0">
           <div className={`w-2 h-2 rounded-full shrink-0 ${professional.booking_link_active ? 'bg-green-400 animate-pulse-slow' : 'bg-slate-500'}`} />
           <span className="text-slate-600 text-sm truncate max-w-[200px]">{bookingUrl}</span>
           <div className="flex items-center gap-1 shrink-0">
@@ -147,7 +147,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Estadísticas del día */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div data-tour="dashboard-stats" className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
           icon={<Calendar className="text-brand-400" size={20} />}
           label="Citas hoy"
@@ -169,7 +169,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Próximas citas */}
-      <div className="card overflow-hidden">
+      <div data-tour="dashboard-upcoming" className="card overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b border-slate-200/50">
           <div className="flex items-center gap-2">
             <Clock className="text-brand-400" size={18} />

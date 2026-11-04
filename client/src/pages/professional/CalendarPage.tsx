@@ -172,7 +172,7 @@ export default function CalendarPage() {
           <h1 className="text-2xl font-bold text-slate-900">Calendario</h1>
           <p className="text-slate-600 mt-1 text-sm">Tus citas de un vistazo</p>
         </div>
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div data-tour="calendar-stats" className="grid grid-cols-3 gap-2 sm:gap-3">
           <StatTile icon={<Sun size={14} />} label="Hoy" value={stats.today} />
           <StatTile icon={<CalendarDays size={14} />} label="Esta semana" value={stats.week} />
           <StatTile icon={<Hourglass size={14} />} label="Por aprobar" value={stats.pending} highlight={stats.pending > 0} />
@@ -186,6 +186,7 @@ export default function CalendarPage() {
           </div>
         ) : (
           <div className="flex-1 flex flex-col min-h-0 p-3 sm:p-5">
+            <div data-tour="calendar-grid" className="flex-1 min-h-0 flex flex-col">
             <BigCalendar
               localizer={localizer}
               culture="es"
@@ -221,9 +222,10 @@ export default function CalendarPage() {
               }}
               className="flex-1 min-h-0"
             />
+            </div>
 
             {/* Leyenda */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 mt-1 border-t border-slate-100">
+            <div data-tour="calendar-legend" className="flex flex-wrap items-center justify-between gap-3 pt-4 mt-1 border-t border-slate-100">
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
                 {(['pending', 'confirmed', 'completed', 'cancelled'] as const)
                   .filter(s => showCancelled || s !== 'cancelled')
@@ -278,7 +280,7 @@ function StatTile({ icon, label, value, highlight = false }: {
 function CalendarToolbar({ label, view, views, onNavigate, onView }: ToolbarProps<MyEvent>) {
   const viewList = (Array.isArray(views) ? views : Object.keys(views)) as View[]
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+    <div data-tour="calendar-toolbar" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
       <div className="flex items-center gap-2">
         <div className="flex items-center rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
           <button onClick={() => onNavigate('PREV')} aria-label="Anterior" className="p-2 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
