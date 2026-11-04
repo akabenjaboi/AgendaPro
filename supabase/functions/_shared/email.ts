@@ -209,3 +209,63 @@ export async function sendAppointmentCancelledEmail(
   ])
 }
 
+
+// ─── Tests psicométricos ──────────────────────────────────────────────────────
+
+function escapeHtml(text: string): string {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;")
+}
+
+export async function sendAssessmentInvitationEmail(
+  patient: EmailContact,
+  professional: EmailContact,
+  details: { token: string; instrumentNames: string[]; expiresAt: string; timezone?: string },
+) {
+  const url = `${appUrl}/test/${details.token}`
+  const expires = formatDate(details.expiresAt, details.timezone)
+  const count = details.instrumentNames.length
+  const html = `
+    <div style="font-family: sans-serif; max-w-md; margin: 0 auto;">
+      <h2 style="color: #0f172a;">Hola ${escapeHtml(patient.name)},</h2>
+      <p>${escapeHtml(professional.name)} te pide responder ${count === 1 ? "un breve cuestionario" : `${count} breves cuestionarios`} antes o como parte de tu atención.</p>
+      <p>Toma pocos minutos y no necesitas crear una cuenta. Tus respuestas solo las verá ${escapeHtml(professional.name)}.</p>
+      <a href="${url}" style="display: inline-block; background-color: #0ea5e9; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 16px 0;">Responder cuestionario</a>
+      <p style="font-size: 12px; color: #64748b;">
+        El enlace es personal y vence el <span style="text-transform: capitalize;">${expires}</span>.<br/>
+        Si el botón no funciona, copia este enlace en tu navegador:<br/>
+        <a href="${url}">${url}</a>
+      </p>
+    </div>
+  `
+  return sendEmail(patient.email, `${professional.name} te envió un cuestionario`, html)
+}
+
+export async function sendAssessmentCompletedEmailToProfessional(
+  professional: EmailContact,
+  patientName: string,
+  details: { instrumentNames: string[]; urgent: boolean },
+) {
+  // Por privacidad, el correo no incluye puntajes ni respuestas: solo avisa.
+  const urgentBlock = details.urgent
+    ? `<div style="background-color: #fef2f2; padding: 15px; border-radius: 8px; border: 1px solid #fecaca; margin: 20px 0;">
+        <p style="margin: 0; color: #991b1b;"><strong>Requiere atención:</strong> hay una respuesta marcada como prioritaria. Revisa el resultado lo antes posible.</p>
+      </div>`
+    : ""
+  const html = `
+    <div style="font-family: sans-serif; max-w-md; margin: 0 auto;">
+      <h2 style="color: #0f172a;">Hola ${escapeHtml(professional.name)},</h2>
+      <p><strong>${escapeHtml(patientName)}</strong> respondió: ${details.instrumentNames.map(escapeHtml).join(", ")}.</p>
+      ${urgentBlock}
+      <a href="${appUrl}/appointments" style="display: inline-block; background-color: #0ea5e9; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">Ver resultados</a>
+    </div>
+  `
+  const subject = details.urgent
+    ? `⚠️ Requiere atención: ${patientName} respondió un cuestionario`
+    : `${patientName} respondió un cuestionario`
+  return sendEmail(professional.email, subject, html)
+}

@@ -4,6 +4,7 @@ import { useAuthStore } from '../../stores/authStore'
 import { supabase } from '../../lib/supabase'
 import api from '../../services/api'
 import { getMyProfile } from '../../services/professional'
+import AssessmentsPanel from '../../components/assessments/AssessmentsPanel'
 import { format, parseISO, isToday, isTomorrow, isPast } from 'date-fns'
 import { es } from 'date-fns/locale/es'
 import toast from 'react-hot-toast'
@@ -391,6 +392,14 @@ export function AppointmentDetailModal({
               </div>
             )}
           </div>
+
+          {/* Tests psicométricos */}
+          <AssessmentsPanel
+            appointmentId={apt.id}
+            patientName={apt.patient_name}
+            patientEmail={apt.patient_email}
+            patientPhone={apt.patient_phone}
+          />
 
           {/* Acciones */}
           {(canConfirm || canComplete || canCancel || canDelete) && (

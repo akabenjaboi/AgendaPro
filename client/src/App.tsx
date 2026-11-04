@@ -18,6 +18,7 @@ import CancelPage from './pages/public/CancelPage'
 import ReschedulePage from './pages/public/ReschedulePage'
 import MyAppointmentsPage from './pages/patient/MyAppointmentsPage'
 import LandingPage from './pages/public/LandingPage'
+import AssessmentPage from './pages/public/AssessmentPage'
 
 // Layout
 import ProfessionalLayout from './components/layout/ProfessionalLayout'
@@ -77,6 +78,7 @@ function App() {
         <Route path="/book/:slug" element={<BookingPage />} />
         <Route path="/cancel/:token" element={<CancelPage />} />
         <Route path="/reschedule/:token" element={<ReschedulePage />} />
+        <Route path="/test/:token" element={<AssessmentPage />} />
         <Route path="/my-appointments" element={<MyAppointmentsPage />} />
 
         {/* Panel del profesional (protegido) */}
