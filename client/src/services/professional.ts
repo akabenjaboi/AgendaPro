@@ -61,14 +61,13 @@ export async function updateProfile(
 
 /** Verifica si un slug ya está en uso (excluyendo el propio) */
 export async function isSlugTaken(slug: string, excludeId: string): Promise<boolean> {
-  const { data } = await supabase
-    .from('professionals')
-    .select('id')
-    .eq('slug', slug)
-    .neq('id', excludeId)
-    .maybeSingle()
+  const { data, error } = await supabase.rpc('is_slug_taken', {
+    p_slug: slug,
+    p_exclude_id: excludeId,
+  })
 
-  return !!data
+  if (error) throw new Error(error.message)
+  return data === true
 }
 
 /** Genera un slug URL-safe a partir de un texto */

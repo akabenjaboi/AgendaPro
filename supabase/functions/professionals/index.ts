@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     if (req.method === "GET" && !action) {
       const { data, error: dbError } = await supabase
         .from("professionals")
-        .select("id, name, specialty, bio, phone, email, slug, avatar_url, timezone, booking_link_active")
+        .select("id, name, specialty, bio, slug, avatar_url, timezone, booking_link_active")
         .eq("slug", slug)
         .eq("booking_link_active", true)
         .single()
